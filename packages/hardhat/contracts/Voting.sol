@@ -1,27 +1,57 @@
 pragma solidity >=0.8.0 <0.9.0;
 //SPDX-License-Identifier: MIT
 
-import "hardhat/console.sol";
-// import "@openzeppelin/contracts/access/Ownable.sol"; 
-// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
-
 contract Voting {
 
-  event SetPurpose(address sender, string purpose);
-
-  string public purpose = "Building Unstoppable Apps!!!";
-
-  constructor() payable {
-    // what should we do on deploy?
+  struct Student {
+    bool authorized;
+    bool voted;
+    uint256 vote;
   }
 
-  function setPurpose(string memory newPurpose) public {
-      purpose = newPurpose;
-      console.log(msg.sender,"set purpose to",purpose);
-      emit SetPurpose(msg.sender, purpose);
+  // To check if election is active or not
+  bool public isActive = false;
+  bool public isEnded = false;
+
+  // Storing address of those who completed the voting process
+  mapping(address => bool) public voters;
+
+
+  // Voting Process
+  function vote(uint256 voteInex)
+    public
+    electionIsStillOn
+    electionIsActive
+  {
+    //Check if voter is authorized and has not already voted
+    require(!voters[msg.sender].voted);
+    require(voters[msg.sender].authorized);
+
+    //record vote
+    voters[msg.sender].vote = voteIndex;
+    voters[msg.sender].voted = true;
+
+    //increase candidate vote count by 1
+    candidates[voteIndex].voteCount += 1;
   }
 
-  // to support receiving ETH by default
-  receive() external payable {}
-  fallback() external payable {}
+  // * MODIFIERS *
+
+  modifier onlyValidCandidate(uint256 _candidateId) {
+    require(
+      _candidateId < candidatesCount && _candidateId >= 0,
+      "Invalid candidate to Vote!"
+    );
+    _;
+    }
+
+  modifier electionIsStillOn() {
+    require(!isEnded, "Election has ended!");
+    _;
+  }
+
+  modifier electionIsActive() {
+    require(isActive, "Election has not begun!");
+    _;
+    }
 }
