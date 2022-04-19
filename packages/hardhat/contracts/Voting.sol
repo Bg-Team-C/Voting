@@ -36,4 +36,25 @@ contract Voting {
     candidates[voteIndex].voteCount += 1;
   }
 
+  // * MODIFIERS *
+
+  modifier onlyValidCandidate(uint256 _candidateId) {
+    require(
+      _candidateId < candidatesCount && _candidateId >= 0,
+      "Invalid candidate to Vote!"
+    );
+    _;
+    }
+
+  modifier electionIsStillOn() {
+    require(!isEnded, "Election has ended!");
+    _;
+  }
+
+  modifier electionIsActive() {
+    require(isActive, "Election has not begun!");
+    _;
+    }
+}
+
 }
