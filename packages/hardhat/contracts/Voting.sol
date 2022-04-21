@@ -3,18 +3,11 @@ pragma solidity >=0.8.0 <0.9.0;
 
 contract Voting {
 
-  struct Student {
-    bool authorized;
-    bool voted;
-    uint256 vote;
-  }
-
   struct Candidate {
     uint candidateId;
     bytes32 name;
     bytes32 position;
   }
-  
 
   bytes32 constant TEACHER_ROLE = keccak256("TEACHER_ACCESS");
   bytes32 constant CHAIRMAN_ROLE = keccak256("CHAIRMAN_ACCESS");
@@ -37,21 +30,21 @@ contract Voting {
 
 
   // Voting Process
-  function vote(uint256 voteInex)
-    public
-    electionIsStillOn
-    electionIsActive
+  function vote (uint _candidateId) public
+  electionIsStillOn
+  electionIsActive
   {
-    //Check if voter is authorized and has not already voted
-    require(!voters[msg.sender].voted);
-    require(voters[msg.sender].authorized);
+    // To check that voters haven't voted before
+    require(!voters[msg.sender]);
 
-    //record vote
-    voters[msg.sender].vote = voteIndex;
-    voters[msg.sender].voted = true;
+    // Check candidate is valid
+    require(_candidateId > 0 && _candidateId <= candidateCounter);
 
-    //increase candidate vote count by 1
-    candidates[voteIndex].voteCount += 1;
+    // Record the vote
+    voters[msg.sender] = true;
+
+    // Update candidate vote Count
+    candidates[_candidateId].votesObtained ++;
   }
 
   function setElectionCandidates(string[] memory names, string[] memory position) public 
@@ -95,7 +88,7 @@ contract Voting {
 
   modifier onlyValidCandidate(uint256 _candidateId) {
     require(
-      _candidateId < candidatesCount && _candidateId >= 0,
+      _candidateId < candidatesCounter && _candidateId >= 0,
       "Invalid candidate to Vote!"
     );
     _;
