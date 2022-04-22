@@ -31,7 +31,7 @@ import externalContracts from "./contracts/external_contracts";
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
 import { useStaticJsonRPC } from "./hooks";
-import Candidates from "./components/Candidates";
+import {Election} from "./views";
 import Students from "./components/Students";
 
 const { ethers } = require("ethers");
@@ -238,8 +238,8 @@ function App(props) {
         <Menu.Item key="/Vote Result">
           <Link to="/Vote Result"> Vote Result</Link>
         </Menu.Item>
-        <Menu.Item key="/Candidates">
-          <Link to="/Candidates">Candidates</Link>
+        <Menu.Item key="/Election">
+          <Link to="/Election">Election</Link>
         </Menu.Item>
         <Menu.Item key="/Voters">
           <Link to="/Voters">Voters</Link>
@@ -248,8 +248,8 @@ function App(props) {
       {/* <TopNavbar /> */}
 
       <Switch>
-        <Route path="/Candidates">
-          <Candidates contract={writeContracts.Voting} tx={tx}/>
+        <Route path="/Election">
+          <Election votingRead={readContracts.Voting} votingWrite={writeContracts.Voting} tx={tx}/>
         </Route>
         <Route path="/Voters">
           <Students contract={readContracts.Voting} tx={tx}/>
