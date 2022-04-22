@@ -5,13 +5,14 @@ contract Voting {
 
   struct Candidate {
     uint candidateId;
-    bytes32 name;
-    bytes32 position;
+    string name;
+    string position;
   }
 
   bytes32 constant TEACHER_ROLE = keccak256("TEACHER_ACCESS");
   bytes32 constant CHAIRMAN_ROLE = keccak256("CHAIRMAN_ACCESS");
   bytes32 constant STUDENT_ROLE = keccak256("STUDENT_ACCESS");
+  bytes32 constant  ADMIN_ROLE = keccak256("STUDENT_ACCESS");  
 
   mapping(address => bytes32) userRole;
   //candidate id to vote gotten
@@ -19,7 +20,7 @@ contract Voting {
   mapping(uint => Candidate) public candidates;
 
 
-  uint private candidateCounter;
+  uint private candidateCounter = 1;
 
   // To check if election is active or not
   bool public isActive = false;
@@ -44,13 +45,12 @@ contract Voting {
     voters[msg.sender] = true;
 
     // Update candidate vote Count
-    candidates[_candidateId].votesObtained ++;
+    votesObtained[_candidateId] = votesObtained[_candidateId]++;
   }
 
   function setElectionCandidates(string[] memory names, string[] memory position) public 
-  onlyTeacher(msg.sender)
   {
-    candidateCounter = 1; // should be intailized/reset in start vote 
+    //candidateCounter = 1; // should be intailized/reset in start vote 
     for (uint256 i = 0; i < names.length; i++) {
       Candidate storage candidate = candidates[candidateCounter];
       candidate.candidateId = candidateCounter;
@@ -63,32 +63,71 @@ contract Voting {
 
   function publishResult()
     public
+    view
     onlyChairmanOrTeacher
     electionEnded
     returns(
-      string[],
-      string[],
-      uint[]
+      string[] memory,
+      string[] memory,
+      uint[] memory
     )
     {
-      string[] names = new string[](candidateCounter);
-      string[] positions = new string[](candidateCounter);
-      uint[] votes = new uint[](candidateCounter);
+      string[] memory names = new string[](candidateCounter);
+      string[] memory positions = new string[](candidateCounter);
+      uint[] memory votes = new uint[](candidateCounter);
 
       for (uint256 i = 0; i < candidateCounter; i++) {
         names[i] = candidates[i].name;
-        positions = candidates[i].position;
-        votes = votesObtained[i];
+        positions[i] = candidates[i].position;
+        votes[i] = votesObtained[i];
       }
 
       return(names, positions, votes);
+  }
+
+  function getRole() public view returns(string memory) {
+    if(userRole[msg.sender] == TEACHER_ROLE){
+      return "Teacher";
     }
+     if(userRole[msg.sender] == CHAIRMAN_ROLE){
+      return "chairman";
+    }
+     if(userRole[msg.sender] == STUDENT_ROLE){
+      return "student";
+    }
+     if(userRole[msg.sender] == ADMIN_ROLE){
+      return "admin";
+    }
+    
+    return "No role";
+  }
+
+  function getCandidates()
+    public view
+    returns(
+        uint[] memory,
+        string[] memory,
+        string[] memory
+      )
+    {
+      string[] memory names = new string[](candidateCounter);
+      string[] memory positions = new string[](candidateCounter);
+      uint[] memory id = new uint[](candidateCounter);
+
+      for (uint256 i = 0; i < candidateCounter; i++) {
+        names[i] = candidates[i].name;
+        positions[i] = candidates[i].position;
+        id[i] = candidates[i].candidateId;
+      }
+
+      return(id, names, positions);
+  }  
 
   // * MODIFIERS *
 
   modifier onlyValidCandidate(uint256 _candidateId) {
     require(
-      _candidateId < candidatesCounter && _candidateId >= 0,
+      _candidateId < candidateCounter && _candidateId >= 0,
       "Invalid candidate to Vote!"
     );
     _;
@@ -110,15 +149,15 @@ contract Voting {
     _;
   }
 
-  modifier onlyTeacher(address user) {
-    require(userRole[user] == TEACHER_ROLE, "You don't have the required privilege");
+  modifier onlyTeacher {
+    require(userRole[msg.sender] == TEACHER_ROLE, "You don't have the required privilege");
     _;
   }
 
-  modifier onlyChairmanOrTeacher (address user) {
+  modifier onlyChairmanOrTeacher {
     require(
-      userRole[user] == TEACHER_ROLE ||
-      userRole[user] == CHAIRMAN_ROLE ||
+      userRole[msg.sender] == TEACHER_ROLE ||
+      userRole[msg.sender] == CHAIRMAN_ROLE,
       "You don't have the required privilege"
     );
     _;
