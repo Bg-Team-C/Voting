@@ -10,7 +10,7 @@ export default function Election({
   tx
     }) {
 
-    let [dataSource, setFiles] = useState([]);
+    let [files, setFiles] = useState([]);
 
 
     const columns = [
@@ -32,20 +32,30 @@ export default function Election({
     ];
 
     const loadFiles = async () => {
-        const candidatesList = await tx(votingRead.getCandidates());
-        setFiles(
-        () => {
-            for (let i = 0; i < candidatesList[0].length; i++) {
-                dataSource.push(
-                    {
-                        "id": candidatesList[0][i],
-                        "name": candidatesList[1][i],
-                        "position": candidatesList[2][i]
-                    }
-                )
-                    console.log(dataSource)
-            }
-        });
+        const files = await tx(votingRead.getCandidates());
+        // setFiles(
+        // () => {
+        //     if(candidatesList == undefined) return
+        //     for (let i = 0; i < candidatesList[0].length; i++) {
+        //         dataSource.push(
+        //             {
+        //                 //"id": candidatesList[0][i],
+        //                 "name": candidatesList[1][i],
+        //                 "position": candidatesList[2][i]
+        //             }
+        //         )
+        //             console.log(dataSource)
+        //     }
+        // });
+       setFiles(
+      files[0].map((id, index) => {
+        return {
+          id,
+          name: files[1][index],
+          position: files[2][index],
+        };
+      }),
+    ); 
     };
 
     return (
@@ -58,7 +68,7 @@ export default function Election({
             <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }} onClick={loadFiles}>
                 Load Files
             </Button>{" "}
-            <Table dataSource={dataSource} columns={columns} />;
+            <Table dataSource={files} columns={columns} />;
         </div>
     </div>
     );
