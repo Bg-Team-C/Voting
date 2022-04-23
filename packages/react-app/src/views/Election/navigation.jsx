@@ -2,7 +2,7 @@ import { Button, Col, Row } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import AddElection from "./Add";
 
-export function Navigation() {
+export function Navigation({ buttons }) {
   return (
     <div>
       <Row gutter={20} align="middle">
@@ -22,6 +22,9 @@ export function Navigation() {
             </Link>
           </Button>
         </Col>
+        {buttons.map(button => (
+          <Col>{button}</Col>
+        ))}
       </Row>
     </div>
   );

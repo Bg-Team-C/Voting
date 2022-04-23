@@ -5,9 +5,7 @@ import { Table, Button, Row, Col, Card, Upload, message } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import * as XLSX from "xlsx";
 
-
-
-export default function Stakeholders({ votingRead, votingWrite, tx }) {
+export default function Stakeholders({ schoolWrite, votingRead, votingWrite, tx }) {
   const [stakeholdersCSV, setCustomersCsvFile] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [names, setNames] = useState([]);
@@ -75,12 +73,12 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
     reader.onload = evt => {
       /* Parse data */
       const bstr = evt.target.result;
-      const wb = csv.read(bstr, { type: "binary" });
+      const wb = XLSX.read(bstr, { type: "binary" });
       /* Get first worksheet */
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       /* Convert array of arrays */
-      const data = csv.utils.sheet_to_csv(ws, { header: 1 });
+      const data = XLSX.utils.sheet_to_csv(ws, { header: 1 });
       processData(data);
     };
     reader.readAsBinaryString(file);
@@ -88,7 +86,7 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
 
   return (
     <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
-      <Card title="Upload school members">
+      <Card title="Upload Stakeholders">
         <div style={{ padding: 8 }}>
           <Upload
             accept=".csv,.xlsx,.xls"
@@ -111,7 +109,7 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
               loading={uploading}
               onClick={async () => {
                 setUploading(true);
-                // await tx(writeContracts.Nxt.batchTokenTransfer(addresses, names, roles));
+                await tx(schoolWrite.addStakeholders(addresses, names, roles));
                 setUploading(false);
                 setCustomersCsvFile([]);
               }}

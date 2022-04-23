@@ -2,6 +2,7 @@ pragma solidity >=0.8.0 <0.9.0;
 //SPDX-License-Identifier: MIT
 
 import  "./School.sol";
+import "hardhat/console.sol";
 
 contract Voting {
 
@@ -28,10 +29,10 @@ contract Voting {
   mapping(uint => Election) public elections;
 
 
-  uint private electionCounter = 1;
+  uint private electionCounter = 0;
 
-  // Voting Process
-  function vote (address _candidateId, uint electionId) public
+  //@notice Voting Process
+  function vote(address _candidateId, uint electionId) public
   electionIsActive(electionId)
   onlyStakeholders
   {
@@ -42,12 +43,13 @@ contract Voting {
     // Record the vote
     election.voters[msg.sender] = true;
 
-    // Update candidate vote Count
-    election.candidateVote[_candidateId] += 1;
-    emit Voted(electionId, msg.sender, _candidateId);
+    //@notice Update candidate vote Count
+    // election.candidateVote[_candidateId] += 1;
+    emit Voted(electionId, _candidateId);
   }
   
-// start election
+  ///@notice  Function to  start  election
+
   function startElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     require(!election.isElectionEnded, "This election has Ended");
@@ -55,7 +57,8 @@ contract Voting {
     election.startBlock = block.number;
   }
 
-// stop election
+  ///@notice  Function to  stop  election
+
   function stopElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     election.isElectionActive = false;
@@ -63,25 +66,33 @@ contract Voting {
     election.endBlock = block.number;
   }
 
-// add candidates
+  function getBlockNumbers(uint electionId) public view returns (uint, uint) {
+    Election storage election = elections[electionId];
+
+    return (election.startBlock, election.endBlock);
+
+  }
+  ///@notice  Function to  create a new election
   function addElection(address[] calldata candidateList, string calldata position) public
   onlyChairmanOrTeacher 
   {
     Election storage election = elections[electionCounter];
     election.electionId = electionCounter;
-    election.candidateCounter = 1;
+    election.candidateCounter = candidateList.length;
     election.position = position;
     election.isElectionActive = false;
     election.isElectionEnded = false;
+
     for (uint256 i = 0; i < candidateList.length; i++) {
-      election.candidates[election.candidateCounter] = candidateList[i];
-      election.candidateCounter++;
+      election.candidates[i] = candidateList[i];
     }
+
 
     electionCounter++;
   }
 
-// get result of election
+  ///@notice  Function to  collate  result
+
   function collateResult(uint electionId, address[] calldata candidates, uint[] calldata count)
     public
     onlyChairmanOrTeacher
@@ -94,12 +105,11 @@ contract Voting {
       }
   }
 
-// publish result
-  function publishResult(uint electionId)
+  ///@notice  Function to  view result of   election
+
+  function viewResults(uint electionId)
     public
     view
-    onlyChairmanOrTeacher
-    electionEnded(electionId)
     returns(
       address[] memory,
       uint[] memory,
@@ -118,27 +128,39 @@ contract Voting {
       return(candidateList, votes, election.position);
   }
 
-// get election rolling
+
+  ///@notice  Function to  get  election
+
   function getElections()
     public view
     returns(
         uint[] memory,
         address[][] memory,
-        string[] memory
+        string[] memory,
+        bool[] memory,
+        bool[] memory
+
       )
     {
       uint[] memory ids = new uint[](electionCounter);
       address[][] memory candidates = new address[][](electionCounter);
       string[] memory positions = new string[](electionCounter);
+      bool[] memory isActives = new bool[](electionCounter);
+      bool[] memory isEndeds = new bool[](electionCounter);
+
+
 
       for (uint256 i = 0; i < electionCounter; i++) {
-        (uint id, address[] memory candidate, string memory position) = getElection(i);
+        (uint id, address[] memory candidate, string memory position, bool isActive, bool isEnded) = getElection(i);
         candidates[i] = candidate;
         positions[i] = position;
         ids[i] = id;
+        isActives[i] = isActive;
+        isEndeds[i] = isEnded;
+
       }
 
-      return(ids, candidates, positions);
+      return(ids, candidates, positions, isActives, isEndeds);
   }  
 
   function getElection(uint electionId)
@@ -146,7 +168,9 @@ contract Voting {
     returns(
         uint,
         address[] memory,
-        string memory
+        string memory,
+        bool,
+        bool
       )
     {
       Election storage election = elections[electionId];
@@ -154,9 +178,11 @@ contract Voting {
 
       for (uint256 i = 0; i < election.candidateCounter; i++) {
        candidates[i] = election.candidates[i];
+           console.log("Election   candidate >>> ", candidates[i]);
+
       }
 
-      return(electionId, candidates, election.position);
+      return(electionId, candidates, election.position, election.isElectionActive, election.isElectionEnded);
   }  
 
 
@@ -176,19 +202,19 @@ contract Voting {
   }
 
   modifier onlyTeacher {
-        require(school.hasRole(string("Teacher")), "You don't have the required privilege");
+        require(school.hasRole(string("Teacher"), msg.sender), "You don't have the required privilege");
         _;
   }
 
   modifier onlyChairman {
-        require(school.hasRole(string("Chairman")), "You don't have the required privilege");
+        require(school.hasRole(string("Chairman"), msg.sender), "You don't have the required privilege");
         _;
   }
 
   modifier onlyChairmanOrTeacher {
         require(
-        school.hasRole(string("Chairman")) ||
-        school.hasRole(string("Teacher")),
+        school.hasRole(string("Chairman"), msg.sender) ||
+        school.hasRole(string("Teacher"), msg.sender),
         "You don't have the required privilege"
         );
         _;
@@ -196,17 +222,17 @@ contract Voting {
   
   modifier onlyStakeholders {
         require(
-        school.hasRole(string("Chairman")) ||
-        school.hasRole(string("Board_member")) ||
-        school.hasRole(string("Teacher")) ||
-        school.hasRole(string("Student")),
+        school.hasRole(string("Chairman"), msg.sender) ||
+        school.hasRole(string("Board_member"), msg.sender) ||
+        school.hasRole(string("Teacher"), msg.sender) ||
+        school.hasRole(string("Student"), msg.sender),
         "You don't have the required privilege"
         );
         _;
   }
 
 
-  
+  event Voted(uint electionId, address candidate);
 
   //* EVENTS & ERRORS *
 
