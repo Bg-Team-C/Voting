@@ -1,41 +1,31 @@
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
+const keccak256 = require('keccak256')
 
 use(solidity);
 
-describe("My Dapp", function () {
-  let myContract;
+describe("Election", function () {
+  let voting;
+  let 
 
   // quick fix to let gas reporter fetch data from gas station & coinmarketcap
-  before((done) => {
+  before(done) => {
     setTimeout(done, 2000);
   });
 
-  describe("YourContract", function () {
-    it("Should deploy YourContract", async function () {
-      const YourContract = await ethers.getContractFactory("YourContract");
+  describe("Voting", function () {
+    it("Should deploy Voting", async function () {
+      const Voting = await ethers.getContractFactory("Voting");
 
-      myContract = await YourContract.deploy();
-    });
+      voting = await Voting.deploy();
 
-    describe("setPurpose()", function () {
-      it("Should be able to set a new purpose", async function () {
-        const newPurpose = "Test Purpose";
-
-        await myContract.setPurpose(newPurpose);
-        expect(await myContract.purpose()).to.equal(newPurpose);
-      });
-
-      it("Should emit a SetPurpose event ", async function () {
-        const [owner] = await ethers.getSigners();
-
-        const newPurpose = "Another Test Purpose";
-
-        expect(await myContract.setPurpose(newPurpose))
-          .to.emit(myContract, "SetPurpose")
-          .withArgs(owner.address, newPurpose);
-      });
+      console.log("ZuriElection Contract Address is...\n", voting.address);
     });
   });
-});
+
+ 
+
+
+
+  });
