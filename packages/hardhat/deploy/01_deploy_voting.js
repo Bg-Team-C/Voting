@@ -5,19 +5,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
+  const school = await ethers.getContract("School", deployer);
 
+  console.log("\n 🏵  Deploying Voting ...\n");
+
+  // Deploy the Voting
   await deploy("Voting", {
     from: deployer,
+    args: [school.address],
     log: true,
   });
-  
-  const voting = await ethers.getContract("Voting", deployer);
 
-  
+  console.log("\n    ✅ confirming...\n");
+
+  const nxt = await ethers.getContract("Voting", deployer);
+
 };
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-module.exports.tags = ["AlphaShare"];
+module.exports.tags = ["Voting"];
