@@ -33,6 +33,13 @@ contract School {
 
     }
 
+    function addStakeholders(address[] memory users, string[] calldata names, string[] calldata roles) 
+      public {
+        for (uint256 i = 0; i < users.length; i++) {
+          addStakeholder(users[i], names[i], roles[i]);
+        }
+    }
+
     function getStakeholders()
     public view
     returns(

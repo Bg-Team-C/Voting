@@ -19,6 +19,9 @@ contract Voting {
     string position;
     uint candidateCounter;
     bool isElectionActive;
+    bool isElectionEnded;
+    uint startBlock;
+    uint endBlock;
   }
 
   mapping(address => bytes32) userRole;
@@ -45,17 +48,20 @@ contract Voting {
 
     // Update candidate vote Count
     election.candidateVote[_candidateId] += 1;
+    emit Voted(msg.sender, _candidateId);
   }
   
 
   function startElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
+    require(!election.isElectionEnded, "This election has Ended");
     election.isElectionActive = true;
   }
 
   function stopElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     election.isElectionActive = false;
+    election.isElectionEnded = true;
   }
 
   function addElection(address[] calldata candidateList, string calldata position) public
@@ -66,6 +72,7 @@ contract Voting {
     election.candidateCounter = 1;
     election.position = position;
     election.isElectionActive = false;
+    election.isElectionEnded = false;
     for (uint256 i = 0; i < candidateList.length; i++) {
       election.candidates[election.candidateCounter] = candidateList[i];
       election.candidateCounter++;
@@ -74,7 +81,19 @@ contract Voting {
     electionCounter++;
   }
 
-  function collateResult(uint electionId)
+  function collateResult(uint electionId, address[] calldata candidates, uint[] calldata count)
+    public
+    onlyChairmanOrTeacher
+    electionEnded(electionId)
+    {
+      Election storage election = elections[electionId];
+
+      for (uint256 i = 0; i < candidates.length; i++) {
+        election.candidateVote[candidates[i]] = count[i];
+      }
+  }
+
+  function publishResult(uint electionId)
     public
     view
     onlyChairmanOrTeacher
@@ -182,6 +201,8 @@ contract Voting {
         "You don't have the required privilege"
         );
         _;
-    }
+  }
+
+  event Voted(address voter, address candidate);
 
 }
