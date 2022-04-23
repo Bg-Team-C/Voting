@@ -44,7 +44,7 @@ contract Voting {
 
     // Update candidate vote Count
     election.candidateVote[_candidateId] += 1;
-    emit Voted(msg.sender, _candidateId);
+    emit Voted(electionId, msg.sender, _candidateId);
   }
   
 
@@ -202,12 +202,12 @@ contract Voting {
   }
 
 
-  event Voted(address voter, address candidate);
+  event Voted(uint electionId, address voter, address candidate);
 
   //* EVENTS & ERRORS *
 
   ///event to emit when the contract is unpaused
-  event ElectionEnded(uint _electionId, candidates);
+  //event ElectionEnded(uint _electionId, candidates);
 
   ///event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);
