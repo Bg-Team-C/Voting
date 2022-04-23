@@ -5,7 +5,7 @@ import { Table, Button, Row, Col, Card, Upload, message } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import * as XLSX from "xlsx";
 
-export default function Stakeholders({ votingRead, votingWrite, tx }) {
+export default function Stakeholders({ schoolWrite, votingRead, votingWrite, tx }) {
   const [stakeholdersCSV, setCustomersCsvFile] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [names, setNames] = useState([]);
@@ -86,7 +86,7 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
 
   return (
     <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
-      <Card title="Upload school members">
+      <Card title="Upload Stakeholders">
         <div style={{ padding: 8 }}>
           <Upload
             accept=".csv,.xlsx,.xls"
@@ -109,7 +109,7 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
               loading={uploading}
               onClick={async () => {
                 setUploading(true);
-                // await tx(writeContracts.Nxt.batchTokenTransfer(addresses, names, roles));
+                await tx(schoolWrite.addStakeholders(addresses, names, roles));
                 setUploading(false);
                 setCustomersCsvFile([]);
               }}

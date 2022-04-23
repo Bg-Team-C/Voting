@@ -6,156 +6,157 @@ import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
 
 export default function AllElections({ votingRead, votingWrite, tx }) {
-
   const [elections, setElections] = useState([]);
 
-  const startElection = id => {
+  const startElection = async id => {
     alert("Starting Election");
+    await tx(votingWrite.startElection(id));
   };
 
-  const endElection = id => {
+  const endElection = async id => {
     alert("Ending Election");
+    await tx(votingWrite.stopElection(id));
   };
-  const enableVoting = id => {
-    alert("Enable Voting");
-  };
-  const disableVoting = id => {
-    alert("Disable Vdoting");
-  };
+
   const compileResult = async id => {
     // Fetch full details about the election.
-    const election = {};
+    const [startBlock, endBlock] = await votingRead.getBlockNumbers(id);
+    const election = await votingRead.getElection(id);
+
     // Get the candidates into a mapping
-    const candidates = [];
+    const candidates = election[1];
     let resultObj = {};
-    candidates.foreach(candidate => {
-      resultObj = { ...resultObj, candidate: 0 };
-    });
-
+    console.log("election >>>>>>>> ", election);
+    for (let i = 0; i < candidates.length; i++) {
+      resultObj = { ...resultObj, [candidates[i]]: 0 };
+    }
     // Go through all events since when the block was deployed until when it was stopped.
-    const voteHistory = await votingRead.queryFilter("voteEvent", election.startBlockNum, election.stopBlockNum);
-
+    const voteHistory = await votingRead.queryFilter("Voted");
+    console.log("History >>> ", voteHistory);
     voteHistory.forEach(data => {
       // Get the candidate and electionId
-      const candidateAddress = data.args[0];
-      const electionId = data.args[1];
+      const electionId = data.args[0];
+      const candidateAddress = data.args[1];
 
-      if (electionId === election.id) {
+      if (electionId === election[0]) {
+        alert("came here");
         resultObj[candidateAddress] += 1;
       }
     });
 
     // Call Smart contract to Publish election Results
     // Pass the array of Candidates and their results.
-    const resultArr = candidates.map(candidate => resultObj[candidate]);
+    const resultArr = candidates.map(candidate => {
+      return resultObj[candidate];
+    });
 
+    await tx(votingWrite.collateResult(election[0], candidates, resultArr));
+    alert("Result has been successfully compiled");
+  };
+
+  const loadElections = async () => {
+    setElections(await votingWrite.getElections());
   };
 
   // Get My Role
 
   // Get all Elections
 
-  // const dataSource = [];
-  const dataSource = [
-    {
-      key: "1",
-      position: "Mike",
-      electionStatus: "Started",
-      votingStatus: "Enabled",
-      action: (
-        <div className="table-actions">
-          <Link className="view" onClick={() => enableVoting(5)} to="#">
-            Start
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-          <Link className="edit" onClick={() => enableVoting(5)} to="#">
-            End
-          </Link>
-          ' &nbsp;&nbsp;&nbsp; '
-          <Link className="delete" onClick={() => enableVoting(5)} to="#">
-            Enable Voting
-          </Link>
-          ' &nbsp;&nbsp;&nbsp; '
-          <Link className="delete" onClick={() => enableVoting(5)} to="#">
-            Disable Voting
-          </Link>
-          ' &nbsp;&nbsp;&nbsp; '
-          <Link className="delete" onClick={() => compileResult(5)} to="#">
-            Compile Result
-          </Link>
-          ' &nbsp;&nbsp;&nbsp; '
-          <Link className="delete" onClick={() => compileResult(5)} to="#">
-            View
-          </Link>
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      position: "John",
-      electionStatus: "Stopped",
-      votingStatus: "Disabled",
-      action: (
-        <div className="table-actions">
-          <Link className="view" onClick={() => enableVoting(5)} to="#">
-            Start
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-          <Link className="edit" onClick={() => enableVoting(5)} to="#">
-            End
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-          <Link className="delete" onClick={() => enableVoting(5)} to="#">
-            Enable Voting
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-          <Link className="delete" onClick={() => enableVoting(5)} to="#">
-            Disable Voting
-          </Link>
-          ' &nbsp;&nbsp;&nbsp; '
-          <Link className="delete" onClick={() => compileResult(5)} to="#">
-            Compile Result
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-          <Link className="delete" onClick={() => compileResult(5)} to="#">
-            View
-          </Link>
-        </div>
-      ),
-    },
-  ];
+  const dataSource = [];
+  // const dataSource = [
+  //   {
+  //     key: "1",
+  //     position: "Mike",
+  //     electionStatus: "Started",
+  //     votingStatus: "Enabled",
+  //     action: (
+  //       <div className="table-actions">
+  //         <Link className="view" onClick={() => startElection(5)} to="#">
+  //           Start
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //         <Link className="edit" onClick={() => enableVoting(5)} to="#">
+  //           End
+  //         </Link>
+  //         ' &nbsp;&nbsp;&nbsp; '
+  //         <Link className="delete" onClick={() => enableVoting(5)} to="#">
+  //           Enable Voting
+  //         </Link>
+  //         ' &nbsp;&nbsp;&nbsp; '
+  //         <Link className="delete" onClick={() => enableVoting(5)} to="#">
+  //           Disable Voting
+  //         </Link>
+  //         ' &nbsp;&nbsp;&nbsp; '
+  //         <Link className="delete" onClick={() => compileResult(5)} to="#">
+  //           Compile Result
+  //         </Link>
+  //         ' &nbsp;&nbsp;&nbsp; '
+  //         <Link className="delete" onClick={() => compileResult(5)} to="#">
+  //           View
+  //         </Link>
+  //       </div>
+  //     ),
+  //   },
+  //   {
+  //     key: "2",
+  //     position: "John",
+  //     electionStatus: "Stopped",
+  //     votingStatus: "Disabled",
+  //     action: (
+  //       <div className="table-actions">
+  //         <Link className="view" onClick={() => enableVoting(5)} to="#">
+  //           Start
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //         <Link className="edit" onClick={() => enableVoting(5)} to="#">
+  //           End
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //         <Link className="delete" onClick={() => enableVoting(5)} to="#">
+  //           Enable Voting
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //         <Link className="delete" onClick={() => enableVoting(5)} to="#">
+  //           Disable Voting
+  //         </Link>
+  //         ' &nbsp;&nbsp;&nbsp; '
+  //         <Link className="delete" onClick={() => compileResult(5)} to="#">
+  //           Compile Result
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //         <Link className="delete" onClick={() => compileResult(5)} to="#">
+  //           View
+  //         </Link>
+  //       </div>
+  //     ),
+  //   },
+  // ];
 
-  if (elections && elections.length) {
-    elections.map((election, key) => {
-      const { id, position, electionStatus, votingStatus } = election;
+  if (elections && elections.length && elections[0].length) {
+    elections[0].map((id, index) => {
+      const position = elections[2][index];
+      const isActive = elections[3][index];
+      const isEnded = elections[4][index];
+
       return dataSource.push({
-        key: key + 1,
+        key: id,
         position: <div>{position}</div>,
-        electionStatus: <div>{electionStatus}</div>,
-        votingStatus: <div>{votingStatus}</div>,
+        electionStatus: <div>{!isActive && isEnded ? "Ended" : isActive ? "Started" : "Not Started"}</div>,
         action: (
           <div className="table-actions">
-            <Link className="view" onClick={() => startElection(id)} to="#">
+            <Link className="view" onClick={async () => await startElection(id)} to="#">
               Start
             </Link>
             &nbsp;&nbsp;&nbsp;
-            <Link className="edit" onClick={() => endElection(id)} to="#">
+            <Link className="edit" onClick={async () => await endElection(id)} to="#">
               End
             </Link>
             &nbsp;&nbsp;&nbsp;
-            <Link className="delete" onClick={() => enableVoting(id)} to="#">
-              Enable Voting
-            </Link>
-            &nbsp;&nbsp;&nbsp;
-            <Link className="disable" onClick={() => disableVoting(id)} to="#">
-              Disable Voting
-            </Link>
-            &nbsp;&nbsp;&nbsp;
-            <Link className="disable" onClick={() => compileResult(id)} to="#">
+            <Link className="disable" onClick={async () => await compileResult(id)} to="#">
               Compile Result
             </Link>
             ' &nbsp;&nbsp;&nbsp;'
-            <Link className="disable" onClick={() => compileResult(id)} to="#">
+            <Link className="disable" to={`/viewElection/${id}`}>
               View
             </Link>
           </div>
@@ -180,27 +181,15 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
           value: "Started",
         },
         {
-          text: "Stopped",
-          value: "Stopped",
+          text: "Not Started",
+          value: "Not Started",
+        },
+        {
+          text: "Ended",
+          value: "Ended",
         },
       ],
       onFilter: (value, record) => record.electionStatus.indexOf(value) === 0,
-    },
-    {
-      title: "Voting Status",
-      dataIndex: "votingStatus",
-      key: "votingStatus",
-      filters: [
-        {
-          text: "Enabled",
-          value: "Enabled",
-        },
-        {
-          text: "Disabled",
-          value: "Disabled",
-        },
-      ],
-      onFilter: (value, record) => record.votingStatuss.indexOf(value) === 0,
     },
     {
       title: "Actions",
@@ -210,11 +199,18 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
     },
   ];
 
+  const additionalNav = [
+    <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
+      <Link className="add" onClick={loadElections} to="#">
+        Load Elections
+      </Link>
+    </Button>,
+  ];
   return (
     // <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
     <Card title="All Elections">
       <div style={{ padding: 8 }}>
-        <Navigation />
+        <Navigation buttons={additionalNav} />
         <div>
           <Table dataSource={dataSource} columns={columns} />;
         </div>

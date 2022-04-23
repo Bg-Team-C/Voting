@@ -261,7 +261,7 @@ function App(props) {
             schoolRead={readContracts.School}
           />
         </Route>
-        <Route path="/viewElection/s:id">
+        <Route path="/viewElection/:id">
           <ViewElection
             votingRead={readContracts.Voting}
             votingWrite={writeContracts.Voting}

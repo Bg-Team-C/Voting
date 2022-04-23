@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 contract School {
-    uint stakeholdersCount = 1;
+    uint stakeholdersCount = 0;
 
   struct Role {
     mapping(address => bool) members;
@@ -19,7 +19,7 @@ contract School {
   mapping(address => uint) private holderMap;
 
   constructor(){
-    _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
+    _roles[keccak256(abi.encodePacked("Admin"))].members[0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931] = true;
   }
 
   function addStakeholder(address user, string calldata name, string calldata role) public onlyAdmin {
@@ -32,28 +32,6 @@ contract School {
     stakeholdersCount++;
 
   }
-
-  function getStakeholders()
-  public view
-  returns(
-    address[] memory,
-    string[] memory,
-    string[] memory
-  )
-  {
-  string[] memory names = new string[](stakeholdersCount);
-  string[] memory roles = new string[](stakeholdersCount);
-  address[] memory id = new address[](stakeholdersCount);
-
-  for (uint256 i = 0; i < stakeholdersCount; i++) {
-    names[i] = stakeholders[i].name;
-    roles[i] = stakeholders[i].role;
-    id[i] = stakeholders[i].id;
-  }
-
-  return(id, names, roles);
-  }
-
 
     function addStakeholders(address[] memory users, string[] calldata names, string[] calldata roles) 
       public {
@@ -106,12 +84,12 @@ contract School {
         _roles[keccak256(abi.encodePacked(role))].members[user] = false;
     }
 
-    function hasRole(string memory role) public view returns(bool) {
-    return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
+    function hasRole(string memory role, address user) public view returns(bool) {
+    return _roles[keccak256(abi.encodePacked(role))].members[user];
   }
 
   modifier onlyAdmin {
-    require(hasRole(string("Admin")), "You are not an Admin");
+    require(hasRole(string("Admin"), msg.sender), "You are not an Admin");
     _;
   }
 
