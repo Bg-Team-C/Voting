@@ -2,13 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 contract School {
-  bytes32 constant TEACHER_ROLE = keccak256("Teacher");
-  bytes32 constant CHAIRMAN_ROLE = keccak256("Chairman");
-  bytes32 constant STUDENT_ROLE = keccak256("Student");
-  bytes32 constant ADMIN_ROLE = keccak256("Admin");  
-  bytes32 constant BOARD_MEMBER_ROLE = keccak256("Board_member");
-
-  uint stakeholdersCount = 1;
+    uint stakeholdersCount = 1;
 
   struct Role {
     mapping(address => bool) members;
@@ -24,7 +18,11 @@ contract School {
   mapping(uint => StakeHolder) private stakeholders;
   mapping(address => uint) private holderMap;
 
-  function addStakeholder(address user, string calldata name, string calldata role) public {
+  constructor(){
+    _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
+  }
+
+  function addStakeholder(address user, string calldata name, string calldata role) public onlyAdmin {
     StakeHolder storage holder = stakeholders[stakeholdersCount];
     holder.id = user;
     holder.name = name;
@@ -70,36 +68,21 @@ contract School {
   }  
 
 
-  function assignRole(address user, string memory role) public {
-    _roles[keccak256(abi.encodePacked(role))].members[user] = true;
-  }
+    function assignRole(address user, string memory role) public onlyAdmin {
+        _roles[keccak256(abi.encodePacked(role))].members[user] = true;
+    }
 
-  function revokeRole(address user, string memory role) public {
-    _roles[keccak256(abi.encodePacked(role))].members[user] = false;
-  }
+    function revokeRole(address user, string memory role) public onlyAdmin {
+        _roles[keccak256(abi.encodePacked(role))].members[user] = false;
+    }
 
-  function hasRole(string calldata role) public view returns(bool) {
+    function hasRole(string memory role) public view returns(bool) {
     return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
   }
 
-
-
-// * MODIFIERS *
-
-  modifier onlyTeacher {
-    require(_roles[TEACHER_ROLE].members[msg.sender], "You don't have the required privilege");
-    _;
-  }
-
-  modifier onlyChairmanOrTeacher {
-    require(
-    _roles[TEACHER_ROLE].members[msg.sender] ||
-    _roles[CHAIRMAN_ROLE].members[msg.sender],
-    "You don't have the required privilege"
-    );
+  modifier onlyAdmin {
+    require(hasRole(string("Admin")), "You are not an Admin");
     _;
   }
 
 }
-
-
