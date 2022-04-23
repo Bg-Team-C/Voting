@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 // school contract for stakeholders
 contract School {
-    uint stakeholdersCount = 1;
+    uint stakeholdersCount = 0;
 
 // to save the role of each stakeholder
   struct Role {
@@ -22,7 +22,7 @@ contract School {
   mapping(address => uint) private holderMap;
 
   constructor(){
-    _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
+    _roles[keccak256(abi.encodePacked("Admin"))].members[0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931] = true;
   }
 
 // description of stakeholders
@@ -35,28 +35,6 @@ contract School {
     holderMap[user] = stakeholdersCount;
     stakeholdersCount++;
 
-  }
-
-// to call a stakeholder
-  function getStakeholders()
-  public view
-  returns(
-    address[] memory,
-    string[] memory,
-    string[] memory
-  )
-  {
-  string[] memory names = new string[](stakeholdersCount);
-  string[] memory roles = new string[](stakeholdersCount);
-  address[] memory id = new address[](stakeholdersCount);
-
-  for (uint256 i = 0; i < stakeholdersCount; i++) {
-    names[i] = stakeholders[i].name;
-    roles[i] = stakeholders[i].role;
-    id[i] = stakeholders[i].id;
-  }
-
-  return(id, names, roles);
   }
 
 // add stakeholders and assign roles
@@ -85,7 +63,6 @@ contract School {
       roles[i] = stakeholders[i].role;
       id[i] = stakeholders[i].id;
     }
-
     return(id, names, roles);
   } 
 
@@ -115,14 +92,12 @@ contract School {
       _roles[keccak256(abi.encodePacked(role))].members[user] = false;
   }
 
-  // owner confirms role
-
-  function hasRole(string memory role) public view returns(bool) {
-  return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
-}
+      function hasRole(string memory role, address user) public view returns(bool) {
+    return _roles[keccak256(abi.encodePacked(role))].members[user];
+      }
 
   modifier onlyAdmin {
-    require(hasRole(string("Admin")), "You are not an Admin");
+    require(hasRole(string("Admin"), msg.sender), "You are not an Admin");
     _;
   }
 

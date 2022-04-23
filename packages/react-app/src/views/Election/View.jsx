@@ -1,64 +1,90 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { utils } from "ethers";
 
 import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
 
-export default function ViewElection({ match, votingRead, votingWrite, tx }) {
+export default function ViewElection({ match, schoolRead, votingRead, votingWrite, tx }) {
   const { path } = useRouteMatch();
 
   const [candidates, setCandidates] = useState([]);
+  const [election, setElection] = useState(null);
+  // const  [electionId,  setElectionId] = useState(match.params.id);
 
   // Check if user has already voted in this election.
 
-  const vote = address => {
-    alert("Voted");
+  const vote = async address => {
+    await tx(votingWrite.vote(address, 0));
   };
 
-  // Get all Candidates using match.params.address.
+  const loadElection = async () => {
+    setElection(await votingRead.getElection(0));
+  };
 
-  // const dataSource = [];
-  const dataSource = [
-    {
-      key: "1",
-      name: "Mike",
-      address: "0x9897987979797798",
-      votes: "",
-      action: (
-        <div className="table-actions">
-          <Link className="view" onClick={() => vote(5)} to="#">
-            Vote
-          </Link>
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      name: "John",
-      address: "Stopped",
-      votes: "",
-      action: (
-        <div className="table-actions">
-          <Link className="view" onClick={() => vote(5)} to="#">
-            Vote
-          </Link>
-          &nbsp;&nbsp;&nbsp;
-        </div>
-      ),
-    },
-  ];
+  const viewResults = async () => {
+    const results = await votingRead.viewResults(0);
+    alert(JSON.stringify(results));
+  };
+
+  useEffect(() => {
+    if (election) {
+      console.log("Election >>> ", election);
+      const loadCandidates = async () => {
+        const candidatesInfo = await Promise.all(
+          election[1].map(async candidateAddr => {
+            return await schoolRead.getStakeholder(candidateAddr);
+          }),
+        );
+        console.log("candidates >>> ", candidatesInfo);
+        setCandidates(candidatesInfo);
+      };
+      loadCandidates();
+    }
+  }, [election]);
+
+  const dataSource = [];
+  // const dataSource = [
+  //   {
+  //     key: "1",
+  //     name: "Mike",
+  //     address: "0x9897987979797798",
+  //     votes: "",
+  //     action: (
+  //       <div className="table-actions">
+  //         <Link className="view" onClick={() => vote(5)} to="#">
+  //           Vote
+  //         </Link>
+  //       </div>
+  //     ),
+  //   },
+  //   {
+  //     key: "2",
+  //     name: "John",
+  //     address: "Stopped",
+  //     votes: "",
+  //     action: (
+  //       <div className="table-actions">
+  //         <Link className="view" onClick={() => vote(5)} to="#">
+  //           Vote
+  //         </Link>
+  //         &nbsp;&nbsp;&nbsp;
+  //       </div>
+  //     ),
+  //   },
+  // ];
 
   if (candidates && candidates.length) {
     candidates.map((candidate, key) => {
-      const { name, address, votes } = candidate;
+      const [address, name, role, votes] = candidate;
       return dataSource.push({
+        key: key,
         name: <div>{name}</div>,
         address: <div>{address}</div>,
         votes: <div>{votes}</div>,
         action: (
           <div className="table-actions">
-            <Link className="view" onClick={() => vote(address)} to="#">
+            <Link className="view" onClick={async () => await vote(address)} to="#">
               Vote
             </Link>
             &nbsp;&nbsp;&nbsp;
@@ -71,8 +97,8 @@ export default function ViewElection({ match, votingRead, votingWrite, tx }) {
   const columns = [
     {
       title: "Name",
-      dataIndex: "Name",
-      key: "Name",
+      dataIndex: "name",
+      key: "name",
     },
     {
       title: "Address",
@@ -93,10 +119,22 @@ export default function ViewElection({ match, votingRead, votingWrite, tx }) {
     },
   ];
 
+  const additionalNav = [
+    <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
+      <Link className="add" onClick={async () => await loadElection()} to="#">
+        Load Election
+      </Link>
+    </Button>,
+    <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
+      <Link className="add" onClick={async () => await viewResults()} to="#">
+        View Results
+      </Link>
+    </Button>,
+  ];
   return (
-    <Card title="All Elections">
+    <Card title={`Viewing an Election for`}>
       <div style={{ padding: 8 }}>
-        <Navigation />
+        <Navigation buttons={additionalNav} />
         <div>
           <Table dataSource={dataSource} columns={columns} />;
         </div>
