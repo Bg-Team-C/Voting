@@ -4,34 +4,56 @@ pragma solidity >=0.8.0 <0.9.0;
 contract School {
     uint stakeholdersCount = 1;
 
-    struct Role {
-        mapping(address => bool) members;
-    }
+  struct Role {
+    mapping(address => bool) members;
+  }
 
-    struct StakeHolder {
-        string name;
-        string role;
-        address id;
-    }
+  struct StakeHolder {
+    string name;
+    string role;
+    address id;
+  }
 
-    mapping(bytes32 => Role) private _roles;
-    mapping(uint => StakeHolder) private stakeholders;
-    mapping(address => uint) private holderMap;
+  mapping(bytes32 => Role) private _roles;
+  mapping(uint => StakeHolder) private stakeholders;
+  mapping(address => uint) private holderMap;
 
-    constructor(){
-      _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
-    }
+  constructor(){
+    _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
+  }
 
-    function addStakeholder(address user, string calldata name, string calldata role) public onlyAdmin {
-        StakeHolder storage holder = stakeholders[stakeholdersCount];
-        holder.id = user;
-        holder.name = name;
-        holder.role = role;
-        assignRole(user, role);
-        holderMap[user] = stakeholdersCount;
-        stakeholdersCount++;
+  function addStakeholder(address user, string calldata name, string calldata role) public onlyAdmin {
+    StakeHolder storage holder = stakeholders[stakeholdersCount];
+    holder.id = user;
+    holder.name = name;
+    holder.role = role;
+    assignRole(user, role);
+    holderMap[user] = stakeholdersCount;
+    stakeholdersCount++;
 
-    }
+  }
+
+  function getStakeholders()
+  public view
+  returns(
+    address[] memory,
+    string[] memory,
+    string[] memory
+  )
+  {
+  string[] memory names = new string[](stakeholdersCount);
+  string[] memory roles = new string[](stakeholdersCount);
+  address[] memory id = new address[](stakeholdersCount);
+
+  for (uint256 i = 0; i < stakeholdersCount; i++) {
+    names[i] = stakeholders[i].name;
+    roles[i] = stakeholders[i].role;
+    id[i] = stakeholders[i].id;
+  }
+
+  return(id, names, roles);
+  }
+
 
     function addStakeholders(address[] memory users, string[] calldata names, string[] calldata roles) 
       public {
@@ -75,6 +97,7 @@ contract School {
     }  
 
 
+
     function assignRole(address user, string memory role) public onlyAdmin {
         _roles[keccak256(abi.encodePacked(role))].members[user] = true;
     }
@@ -93,5 +116,3 @@ contract School {
   }
 
 }
-
-
