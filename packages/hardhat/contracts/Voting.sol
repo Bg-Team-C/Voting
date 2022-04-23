@@ -3,146 +3,185 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import  "./School.sol";
 
-contract Voting is School{
+contract Voting {
+
+  School private school;
+
+  constructor(address schoolAddr) {
+    school = School(schoolAddr);
+  }
+
+  struct Election {
+    uint electionId;
+    mapping(uint => address) candidates;
+    mapping(address => uint)  candidateVote;
+    mapping(address => bool) voters;
+    string position;
+    uint candidateCounter;
+    bool isElectionActive;
+  }
 
   mapping(address => bytes32) userRole;
-  //candidate id to vote gotten
-  mapping(address => uint) private candidateVote;
-  mapping(uint => address) public candidates;
+  mapping(uint => Election) public elections;
 
 
-  uint private candidateCounter = 1;
-
-  // To check if election is active or not
-  bool public isElectionActive = false;
-  bool public isEnded = false;
+  uint private electionCounter = 1;
 
   // Storing address of those who completed the voting process
-  mapping(address => bool) public voters;
+  //mapping(address => bool) public voters;
 
 
   // Voting Process
-  function vote (address _candidateId) public
-  electionIsStillOn
-  electionIsActive
+  function vote (address _candidateId, uint electionId) public
+  electionIsActive(electionId)
+  onlyStakeholders
   {
+    Election storage election = elections[electionId];
     // To check that voters haven't voted before
-    require(!voters[msg.sender]);
-
-    // Check candidate is valid
-    //require(_candidateId > 0 && _candidateId <= candidateCounter);
+    require(!election.voters[msg.sender], "Have already voted");
 
     // Record the vote
-    voters[msg.sender] = true;
+    election.voters[msg.sender] = true;
 
     // Update candidate vote Count
-    candidateVote[_candidateId] = candidateVote[_candidateId]++;
+    election.candidateVote[_candidateId] += 1;
   }
   
 
-  function startElection() public {
-    isElectionActive = true;
+  function startElection(uint electionId) public onlyChairman{
+    Election storage election = elections[electionId];
+    election.isElectionActive = true;
   }
 
-  function stopElection() public {
-    isElectionActive = false;
+  function stopElection(uint electionId) public onlyChairman{
+    Election storage election = elections[electionId];
+    election.isElectionActive = false;
   }
 
-  function setElectionCandidates(address[] calldata candidateList) public 
+  function addElection(address[] calldata candidateList, string calldata position) public
+  onlyChairmanOrTeacher 
   {
-    //candidateCounter = 1; // should be intailized/reset in start vote 
+    Election storage election = elections[electionCounter];
+    election.electionId = electionCounter;
+    election.candidateCounter = 1;
+    election.position = position;
+    election.isElectionActive = false;
     for (uint256 i = 0; i < candidateList.length; i++) {
-      candidates[candidateCounter] = candidateList[i];
+      election.candidates[election.candidateCounter] = candidateList[i];
+      election.candidateCounter++;
     }
+
+    electionCounter++;
   }
 
-  function collateResult()
+  function collateResult(uint electionId)
     public
     view
     onlyChairmanOrTeacher
-    electionEnded
+    electionEnded(electionId)
     returns(
       address[] memory,
-      uint[] memory
+      uint[] memory,
+      string memory
     )
     {
-      address[] memory candidateList = new address[](candidateCounter);
-      uint[] memory votes = new uint[](candidateCounter);
+      Election storage election = elections[electionId];
+      address[] memory candidateList = new address[](election.candidateCounter);
+      uint[] memory votes = new uint[](election.candidateCounter);
 
-      for (uint256 i = 0; i < candidateCounter; i++) {
-        candidateList[i] = candidates[i];
-        votes[i] = candidateVote[candidates[i]];
+      for (uint256 i = 0; i < election.candidateCounter; i++) {
+        candidateList[i] = election.candidates[i];
+        votes[i] = election.candidateVote[election.candidates[i]];
       }
 
-      return(candidateList, votes);
+      return(candidateList, votes, election.position);
   }
 
 
-  function publishResult()
-    public
-    view
-    onlyChairmanOrTeacher
-    electionEnded
-    returns(
-      address[] memory,
-      string[] memory,
-      uint[] memory
-    )
-    {
-      (address[] memory candidateList, uint[] memory votes) = collateResult();
-      string[] memory names = new string[](candidateCounter);
-
-      for (uint256 i = 0; i < candidateList.length; i++) {
-        (, string memory name,) = getStakeholder(candidateList[i]);
-        names[i] = name;
-      }
-
-      return( candidateList, names, votes);
-  }
-
-  function getCandidates()
+  function getElections()
     public view
     returns(
-        string[] memory,
-        address[] memory
+        uint[] memory,
+        address[][] memory,
+        string[] memory
       )
     {
-      string[] memory names = new string[](candidateCounter);
-      address[] memory addresses = new address[](candidateCounter);
+      uint[] memory ids = new uint[](electionCounter);
+      address[][] memory candidates = new address[][](electionCounter);
+      string[] memory positions = new string[](electionCounter);
 
-      for (uint256 i = 0; i < candidateCounter; i++) {
-       (address user, string memory name,) = getStakeholder(candidates[i]);
-       names[i] = name;
-       addresses[i] = user;
+      for (uint256 i = 0; i < electionCounter; i++) {
+        (uint id, address[] memory candidate, string memory position) = getElection(i);
+        candidates[i] = candidate;
+        positions[i] = position;
+        ids[i] = id;
       }
 
-      return(names, addresses);
+      return(ids, candidates, positions);
   }  
+
+  function getElection(uint electionId)
+    public view
+    returns(
+        uint,
+        address[] memory,
+        string memory
+      )
+    {
+      Election storage election = elections[electionId];
+      address[] memory candidates = new address[](election.candidateCounter);
+
+      for (uint256 i = 0; i < election.candidateCounter; i++) {
+       candidates[i] = election.candidates[i];
+      }
+
+      return(electionId, candidates, election.position);
+  }  
+
 
   // * MODIFIERS *
 
-  modifier onlyValidCandidate(uint256 _candidateId) {
-    require(
-      _candidateId < candidateCounter && _candidateId >= 0,
-      "Invalid candidate to Vote!"
-    );
-    _;
-    }
-
-  modifier electionIsStillOn() {
-    require(!isEnded, "Election has ended!");
-    _;
-  }
-
-  modifier electionIsActive() {
-    require(isElectionActive, "Election has not begun!");
+  modifier electionIsActive(uint electionId) {
+    Election storage election = elections[electionId];
+    require(election.isElectionActive, "Election has not begun!");
     _;
     }
 
 
-  modifier electionEnded(){
-    require(!isElectionActive, "Election is still ongoing");
+  modifier electionEnded(uint electionId){
+    Election storage election = elections[electionId];
+    require(!election.isElectionActive, "Election is still ongoing");
     _;
   }
+
+  modifier onlyTeacher {
+        require(school.hasRole(string("Teacher")), "You don't have the required privilege");
+        _;
+  }
+
+  modifier onlyChairman {
+        require(school.hasRole(string("Chairman")), "You don't have the required privilege");
+        _;
+  }
+
+  modifier onlyChairmanOrTeacher {
+        require(
+        school.hasRole(string("Chairman")) ||
+        school.hasRole(string("Teacher")),
+        "You don't have the required privilege"
+        );
+        _;
+  }
+  
+  modifier onlyStakeholders {
+        require(
+        school.hasRole(string("Chairman")) ||
+        school.hasRole(string("Board_member")) ||
+        school.hasRole(string("Teacher")) ||
+        school.hasRole(string("Student")),
+        "You don't have the required privilege"
+        );
+        _;
+    }
 
 }
