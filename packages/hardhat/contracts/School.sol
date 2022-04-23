@@ -59,8 +59,37 @@ contract School {
   return(id, names, roles);
   }
 
+// add stakeholders and assign roles
+  function addStakeholders(address[] memory users, string[] calldata names, string[] calldata roles) 
+    public {
+      for (uint256 i = 0; i < users.length; i++) {
+        addStakeholder(users[i], names[i], roles[i]);
+      }
+  }
 
-// stakeholder address
+// call stakeholders
+  function getStakeholders()
+  public view
+  returns(
+      address[] memory,
+      string[] memory,
+      string[] memory
+    )
+  {
+    string[] memory names = new string[](stakeholdersCount);
+    string[] memory roles = new string[](stakeholdersCount);
+    address[] memory id = new address[](stakeholdersCount);
+
+    for (uint256 i = 0; i < stakeholdersCount; i++) {
+      names[i] = stakeholders[i].name;
+      roles[i] = stakeholders[i].role;
+      id[i] = stakeholders[i].id;
+    }
+
+    return(id, names, roles);
+  } 
+
+
   function getStakeholder(address user)
   public view
   returns(
@@ -72,6 +101,7 @@ contract School {
     uint key = holderMap[user];
     return(stakeholders[key].id, stakeholders[key].name, stakeholders[key].role);
   }  
+
 
 
 // owner asigns role

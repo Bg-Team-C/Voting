@@ -19,6 +19,9 @@ contract Voting {
     string position;
     uint candidateCounter;
     bool isElectionActive;
+    bool isElectionEnded;
+    uint startBlock;
+    uint endBlock;
   }
 
   mapping(address => bytes32) userRole;
@@ -41,19 +44,26 @@ contract Voting {
 
     // Update candidate vote Count
     election.candidateVote[_candidateId] += 1;
+    emit Voted(electionId, msg.sender, _candidateId);
   }
   
-
+// start election
   function startElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
+    require(!election.isElectionEnded, "This election has Ended");
     election.isElectionActive = true;
+    election.startBlock = block.number;
   }
 
+// stop election
   function stopElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     election.isElectionActive = false;
+    election.isElectionEnded = true;
+    election.endBlock = block.number;
   }
 
+// add candidates
   function addElection(address[] calldata candidateList, string calldata position) public
   onlyChairmanOrTeacher 
   {
@@ -62,6 +72,7 @@ contract Voting {
     election.candidateCounter = 1;
     election.position = position;
     election.isElectionActive = false;
+    election.isElectionEnded = false;
     for (uint256 i = 0; i < candidateList.length; i++) {
       election.candidates[election.candidateCounter] = candidateList[i];
       election.candidateCounter++;
@@ -70,7 +81,21 @@ contract Voting {
     electionCounter++;
   }
 
-  function collateResult(uint electionId)
+// get result of election
+  function collateResult(uint electionId, address[] calldata candidates, uint[] calldata count)
+    public
+    onlyChairmanOrTeacher
+    electionEnded(electionId)
+    {
+      Election storage election = elections[electionId];
+
+      for (uint256 i = 0; i < candidates.length; i++) {
+        election.candidateVote[candidates[i]] = count[i];
+      }
+  }
+
+// publish result
+  function publishResult(uint electionId)
     public
     view
     onlyChairmanOrTeacher
@@ -93,7 +118,7 @@ contract Voting {
       return(candidateList, votes, election.position);
   }
 
-
+// get election rolling
   function getElections()
     public view
     returns(
@@ -180,16 +205,20 @@ contract Voting {
         _;
   }
 
+
+  
+
   //* EVENTS & ERRORS *
 
-  ///event to emit when the contract is unpaused
-  event ElectionEnded(uint _electionId, string _candidateName);
+  // event to emit when vote is carried out
+  event Voted(uint electionId, address voter, address candidate);
 
   ///event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);
 
   /// event to emit when a candidate receives a vote
   event VoteForCandidate(uint _candidateId, uint _candidateVoteCount);
+
 
     ///error messages 
     error ElectionNotStarted();
