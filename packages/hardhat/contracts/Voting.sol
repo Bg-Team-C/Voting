@@ -47,7 +47,7 @@ contract Voting {
     emit Voted(electionId, msg.sender, _candidateId);
   }
   
-
+// start election
   function startElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     require(!election.isElectionEnded, "This election has Ended");
@@ -55,6 +55,7 @@ contract Voting {
     election.startBlock = block.number;
   }
 
+// stop election
   function stopElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     election.isElectionActive = false;
@@ -62,6 +63,7 @@ contract Voting {
     election.endBlock = block.number;
   }
 
+// add candidates
   function addElection(address[] calldata candidateList, string calldata position) public
   onlyChairmanOrTeacher 
   {
@@ -79,6 +81,7 @@ contract Voting {
     electionCounter++;
   }
 
+// get result of election
   function collateResult(uint electionId, address[] calldata candidates, uint[] calldata count)
     public
     onlyChairmanOrTeacher
@@ -91,6 +94,7 @@ contract Voting {
       }
   }
 
+// publish result
   function publishResult(uint electionId)
     public
     view
@@ -114,7 +118,7 @@ contract Voting {
       return(candidateList, votes, election.position);
   }
 
-
+// get election rolling
   function getElections()
     public view
     returns(
@@ -202,12 +206,12 @@ contract Voting {
   }
 
 
-  event Voted(uint electionId, address voter, address candidate);
+  
 
   //* EVENTS & ERRORS *
 
-  ///event to emit when the contract is unpaused
-  //event ElectionEnded(uint _electionId, candidates);
+  // event to emit when vote is carried out
+  event Voted(uint electionId, address voter, address candidate);
 
   ///event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);

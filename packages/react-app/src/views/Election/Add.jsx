@@ -4,7 +4,6 @@ import { utils } from "ethers";
 import { CandidateField } from "../../components";
 import { Table, Button, Input, Pagination, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
-import FeatherIcon from "feather-icons-react";
 import { Navigation } from "./navigation";
 
 export default function AddElection({ role, schoolRead, votingRead, votingWrite, tx }) {
