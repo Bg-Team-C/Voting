@@ -81,7 +81,7 @@ contract School {
   }
 
   modifier onlyAdmin {
-    require(hasRole(string("Admin") "You are not an Admin");
+    require(hasRole(string("Admin")), "You are not an Admin");
     _;
   }
 
