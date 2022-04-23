@@ -55,17 +55,47 @@ contract School {
   }
 
 
-  function getStakeholder(address user)
-  public view
-  returns(
-      address,
-      string memory,
-      string memory
-    )
-  {
-    uint key = holderMap[user];
-    return(stakeholders[key].id, stakeholders[key].name, stakeholders[key].role);
-  }  
+    function addStakeholders(address[] memory users, string[] calldata names, string[] calldata roles) 
+      public {
+        for (uint256 i = 0; i < users.length; i++) {
+          addStakeholder(users[i], names[i], roles[i]);
+        }
+    }
+
+    function getStakeholders()
+    public view
+    returns(
+        address[] memory,
+        string[] memory,
+        string[] memory
+      )
+    {
+      string[] memory names = new string[](stakeholdersCount);
+      string[] memory roles = new string[](stakeholdersCount);
+      address[] memory id = new address[](stakeholdersCount);
+
+      for (uint256 i = 0; i < stakeholdersCount; i++) {
+        names[i] = stakeholders[i].name;
+        roles[i] = stakeholders[i].role;
+        id[i] = stakeholders[i].id;
+      }
+
+      return(id, names, roles);
+    } 
+
+
+    function getStakeholder(address user)
+    public view
+    returns(
+        address,
+        string memory,
+        string memory
+      )
+    {
+      uint key = holderMap[user];
+      return(stakeholders[key].id, stakeholders[key].name, stakeholders[key].role);
+    }  
+
 
 
     function assignRole(address user, string memory role) public onlyAdmin {
