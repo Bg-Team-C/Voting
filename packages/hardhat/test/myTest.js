@@ -1,13 +1,12 @@
 const { ethers, upgrades } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
-const keccak256 = require('keccak256')
+const keccak256 = require("keccak256");
 
 use(solidity);
 
 describe("Election", function () {
   let voting;
-
 
   // quick fix to let gas reporter fetch data from gas station & coinmarketcap
   before((done) => {
