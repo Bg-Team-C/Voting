@@ -27,10 +27,6 @@ contract Voting {
 
   uint private electionCounter = 1;
 
-  // Storing address of those who completed the voting process
-  //mapping(address => bool) public voters;
-
-
   // Voting Process
   function vote (address _candidateId, uint electionId) public
   electionIsActive(electionId)
@@ -182,6 +178,20 @@ contract Voting {
         "You don't have the required privilege"
         );
         _;
-    }
+  }
 
+  //* EVENTS & ERRORS *
+
+  ///event to emit when the contract is unpaused
+  event ElectionEnded(uint _electionId, candidates);
+
+  ///event to emit when candidate has been created
+  event CandidateCreated(uint _candidateId, string _candidateName);
+
+  /// event to emit when a candidate receives a vote
+  event VoteForCandidate(uint _candidateId, uint _candidateVoteCount);
+
+    ///error messages 
+    error ElectionNotStarted();
+    error ElectionHasEnded();
 }
