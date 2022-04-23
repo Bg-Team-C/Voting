@@ -14,7 +14,6 @@ import { Link, Route, Switch, useLocation } from "react-router-dom";
 import "./App.css";
 import {
   Account,
-  Contract,
   Faucet,
   GasGauge,
   Header,
@@ -31,8 +30,10 @@ import externalContracts from "./contracts/external_contracts";
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
 import { useStaticJsonRPC } from "./hooks";
-import {Election} from "./views";
-import Students from "./components/Students";
+import AddElection from "./views/Election/Add";
+import AllElections from "./views/Election/AllElections";
+import ViewElection from "./views/Election/View";
+import Stakeholders from "./views/Stakeholders/Index";
 
 const { ethers } = require("ethers");
 
@@ -153,7 +154,6 @@ function App(props) {
   // keep track of a variable from the contract in the local React state:
   const purpose = useContractReader(readContracts, "YourContract", "purpose");
 
-
   // 🧫 DEBUG 👨🏻‍🔬
   useEffect(() => {
     if (
@@ -235,24 +235,48 @@ function App(props) {
         USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
       />
       <Menu style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
-        <Menu.Item key="/Vote Result">
-          <Link to="/Vote Result"> Vote Result</Link>
-        </Menu.Item>
         <Menu.Item key="/Election">
           <Link to="/Election">Election</Link>
         </Menu.Item>
-        <Menu.Item key="/Voters">
-          <Link to="/Voters">Voters</Link>
+        <Menu.Item key="/Stakeholders">
+          <Link to="/Stakeholders">Stakeholders</Link>
         </Menu.Item>
       </Menu>
       {/* <TopNavbar /> */}
 
       <Switch>
         <Route path="/Election">
-          <Election votingRead={readContracts.Voting} votingWrite={writeContracts.Voting} tx={tx}/>
+          <AllElections
+            votingRead={readContracts.Voting}
+            votingWrite={writeContracts.Voting}
+            tx={tx}
+            schoolRead={readContracts.School}
+          />
         </Route>
-        <Route path="/Voters">
-          <Students contract={readContracts.Voting} tx={tx}/>
+        <Route path="/AddElection">
+          <AddElection
+            votingRead={readContracts.Voting}
+            votingWrite={writeContracts.Voting}
+            tx={tx}
+            schoolRead={readContracts.School}
+          />
+        </Route>
+        <Route path="/viewElection/s:id">
+          <ViewElection
+            votingRead={readContracts.Voting}
+            votingWrite={writeContracts.Voting}
+            tx={tx}
+            schoolRead={readContracts.School}
+          />
+        </Route>
+        <Route path="/Stakeholders">
+          <Stakeholders
+            votingRead={readContracts.Voting}
+            votingWrite={writeContracts.Voting}
+            tx={tx}
+            schoolWrite={writeContracts.School}
+            schoolRead={readContracts.School}
+          />
         </Route>
       </Switch>
 
