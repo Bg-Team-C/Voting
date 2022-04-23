@@ -183,7 +183,7 @@ contract Voting {
   //* EVENTS & ERRORS *
 
   ///event to emit when the contract is unpaused
-  event ElectionEnded(uint _electionId, candidates);
+  event ElectionEnded(uint _electionId, string _candidateName);
 
   ///event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);

@@ -5,6 +5,8 @@ import { Table, Button, Row, Col, Card, Upload, message } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import * as XLSX from "xlsx";
 
+
+
 export default function Stakeholders({ votingRead, votingWrite, tx }) {
   const [stakeholdersCSV, setCustomersCsvFile] = useState([]);
   const [addresses, setAddresses] = useState([]);
@@ -73,12 +75,12 @@ export default function Stakeholders({ votingRead, votingWrite, tx }) {
     reader.onload = evt => {
       /* Parse data */
       const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: "binary" });
+      const wb = csv.read(bstr, { type: "binary" });
       /* Get first worksheet */
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       /* Convert array of arrays */
-      const data = XLSX.utils.sheet_to_csv(ws, { header: 1 });
+      const data = csv.utils.sheet_to_csv(ws, { header: 1 });
       processData(data);
     };
     reader.readAsBinaryString(file);

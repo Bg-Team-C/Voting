@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+// school contract for stakeholders
 contract School {
     uint stakeholdersCount = 1;
 
+// to save the role of each stakeholder
   struct Role {
     mapping(address => bool) members;
   }
@@ -14,6 +16,7 @@ contract School {
     address id;
   }
 
+// addresses for stakeholders
   mapping(bytes32 => Role) private _roles;
   mapping(uint => StakeHolder) private stakeholders;
   mapping(address => uint) private holderMap;
@@ -22,6 +25,7 @@ contract School {
     _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
   }
 
+// description of stakeholders
   function addStakeholder(address user, string calldata name, string calldata role) public onlyAdmin {
     StakeHolder storage holder = stakeholders[stakeholdersCount];
     holder.id = user;
@@ -33,6 +37,7 @@ contract School {
 
   }
 
+// to call a stakeholder
   function getStakeholders()
   public view
   returns(
@@ -55,6 +60,7 @@ contract School {
   }
 
 
+// stakeholder address
   function getStakeholder(address user)
   public view
   returns(
@@ -68,17 +74,22 @@ contract School {
   }  
 
 
-    function assignRole(address user, string memory role) public onlyAdmin {
-        _roles[keccak256(abi.encodePacked(role))].members[user] = true;
-    }
-
-    function revokeRole(address user, string memory role) public onlyAdmin {
-        _roles[keccak256(abi.encodePacked(role))].members[user] = false;
-    }
-
-    function hasRole(string memory role) public view returns(bool) {
-    return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
+// owner asigns role
+  function assignRole(address user, string memory role) public onlyAdmin {
+      _roles[keccak256(abi.encodePacked(role))].members[user] = true;
   }
+
+  // owner revokes role
+
+  function revokeRole(address user, string memory role) public onlyAdmin {
+      _roles[keccak256(abi.encodePacked(role))].members[user] = false;
+  }
+
+  // owner confirms role
+
+  function hasRole(string memory role) public view returns(bool) {
+  return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
+}
 
   modifier onlyAdmin {
     require(hasRole(string("Admin")), "You are not an Admin");
