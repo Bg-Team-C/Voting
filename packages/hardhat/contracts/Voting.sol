@@ -56,12 +56,14 @@ contract Voting {
     Election storage election = elections[electionId];
     require(!election.isElectionEnded, "This election has Ended");
     election.isElectionActive = true;
+    election.startBlock = block.number;
   }
 
   function stopElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
     election.isElectionActive = false;
     election.isElectionEnded = true;
+    election.endBlock = block.number;
   }
 
   function addElection(address[] calldata candidateList, string calldata position) public
