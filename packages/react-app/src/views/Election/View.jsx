@@ -6,25 +6,26 @@ import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
 import { encrypt } from "../../encryption";
 
-export default function ViewElection({ match, schoolRead, votingRead, votingWrite, tx }) {
+export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, id }) {
   const { path } = useRouteMatch();
 
   const [candidates, setCandidates] = useState([]);
   const [election, setElection] = useState(null);
-  // const  [electionId,  setElectionId] = useState(match.params.id);
+  const  [electionId,  setElectionId] = useState(id);
 
   // Check if user has already voted in this election.
-
   const vote = async address => {
     await tx(votingWrite.vote(encrypt(address), 0));
   };
 
   const loadElection = async () => {
-    setElection(await votingRead.getElection(0));
+    setElection(await votingRead.getElection(electionId));
   };
 
   const viewResults = async () => {
-    const results = await votingRead.viewResults(0);
+    const results = await votingRead.viewResults(electionId);
+    console.log(results[0])
+    console.log(parseInt(results[1][1].toHexString()))
     alert(JSON.stringify(results));
   };
 
