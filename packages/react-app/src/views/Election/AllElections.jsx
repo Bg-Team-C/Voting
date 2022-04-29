@@ -4,6 +4,8 @@ import { utils } from "ethers";
 import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
+import { useEventListener } from "eth-hooks/events/useEventListener";
+import { decrypt } from "../../encryption";
 
 export default function AllElections({ votingRead, votingWrite, tx }) {
   const [elections, setElections] = useState([]);
@@ -25,34 +27,39 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
 
     // Get the candidates into a mapping
     const candidates = election[1];
+    console.log(election)
     let resultObj = {};
     console.log("election >>>>>>>> ", election);
     for (let i = 0; i < candidates.length; i++) {
       resultObj = { ...resultObj, [candidates[i]]: 0 };
     }
     // Go through all events since when the block was deployed until when it was stopped.
-    const voteHistory = await votingRead.queryFilter("Voted");
+    const voteHistory = await votingRead.queryFilter({name: "Voted"});
     console.log("History >>> ", voteHistory);
-    voteHistory.forEach(data => {
+    voteHistory.forEach( (data) =>  {
       // Get the candidate and electionId
       const electionId = data.args[0];
-      const candidateAddress = data.args[1];
+      const candidateAddress = decrypt(data.args[1]);
+      
 
-      if (electionId === election[0]) {
-        alert("came here");
+      if (electionId.eq(election[0])) {
         resultObj[candidateAddress] += 1;
+        console.log(candidateAddress)
+
       }
     });
 
     // Call Smart contract to Publish election Results
     // Pass the array of Candidates and their results.
     const resultArr = candidates.map(candidate => {
+      console.log(resultObj)
       return resultObj[candidate];
     });
-
+    console.log(resultArr)
     await tx(votingWrite.collateResult(election[0], candidates, resultArr));
     alert("Result has been successfully compiled");
   };
+
 
   const loadElections = async () => {
     setElections(await votingWrite.getElections());

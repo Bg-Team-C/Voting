@@ -5,6 +5,7 @@ import { CandidateField } from "../../components";
 import { Table, Button, Input, Pagination, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
+import { decrypt, encrypt } from "../../encryption";
 
 export default function AddElection({ role, schoolRead, votingRead, votingWrite, tx }) {
   const { path } = useRouteMatch();
@@ -31,6 +32,7 @@ export default function AddElection({ role, schoolRead, votingRead, votingWrite,
 
   const loadStakeholders = async () => {
     alert("Loading Stake holders");
+    
     setStakeHolders(await schoolRead.getStakeholders());
   };
 

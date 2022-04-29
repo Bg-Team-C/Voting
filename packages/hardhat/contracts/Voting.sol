@@ -32,7 +32,7 @@ contract Voting {
   uint private electionCounter = 0;
 
   //@notice Voting Process
-  function vote(address _candidateId, uint electionId) public
+  function vote(string memory _candidateId, uint electionId) public
   electionIsActive(electionId)
   onlyStakeholders
   {
@@ -46,6 +46,7 @@ contract Voting {
     //@notice Update candidate vote Count
     // election.candidateVote[_candidateId] += 1;
     emit Voted(electionId, _candidateId);
+    console.log(_candidateId);
   }
   
   ///@notice  Function to  start  election
@@ -232,12 +233,12 @@ contract Voting {
   }
 
 
-  event Voted(uint electionId, address candidate);
+  event Voted(uint electionId, string candidate);
 
   //* EVENTS & ERRORS *
 
   // event to emit when vote is carried out
-  event Voted(uint electionId, address voter, address candidate);
+  event Voted(uint indexed electionId, address voter, address candidate);
 
   ///event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);
