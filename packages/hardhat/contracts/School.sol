@@ -22,7 +22,7 @@ contract School {
   mapping(address => uint) private holderMap;
 
   constructor(){
-    _roles[keccak256(abi.encodePacked("Admin"))].members[0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931] = true;
+    _roles[keccak256(abi.encodePacked("Admin"))].members[msg.sender] = true;
   }
 
 // description of stakeholders
