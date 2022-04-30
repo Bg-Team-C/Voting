@@ -15,7 +15,7 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
 
   // Check if user has already voted in this election.
   const vote = async address => {
-    await tx(votingWrite.vote(encrypt(address), 0));
+    await tx(votingWrite.vote(encrypt(address), electionId));
   };
 
   const loadElection = async () => {

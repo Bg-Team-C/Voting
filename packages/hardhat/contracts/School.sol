@@ -92,8 +92,12 @@ contract School {
       _roles[keccak256(abi.encodePacked(role))].members[user] = false;
   }
 
-      function hasRole(string memory role, address user) public view returns(bool) {
+  function hasRole(string memory role, address user) public view returns(bool) {
     return _roles[keccak256(abi.encodePacked(role))].members[user];
+      }
+
+  function checkRole(string memory role) public view returns(bool) {
+    return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
       }
 
   modifier onlyAdmin {

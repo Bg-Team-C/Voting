@@ -4,11 +4,12 @@ import { utils } from "ethers";
 import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
-import { useEventListener } from "eth-hooks/events/useEventListener";
 import { decrypt } from "../../encryption";
 
-export default function AllElections({ votingRead, votingWrite, tx }) {
+export default function AllElections({ votingRead, votingWrite, tx, schoolRead }) {
   const [elections, setElections] = useState([]);
+  const isChairman = async() => await schoolRead.checkRole("Chairman").wait();
+  const isTeacher = () =>  schoolRead.checkRole("Teacher");
 
   const startElection = async id => {
     alert("Starting Election");
@@ -34,13 +35,13 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
       resultObj = { ...resultObj, [candidates[i]]: 0 };
     }
     // Go through all events since when the block was deployed until when it was stopped.
-    const voteHistory = await votingRead.queryFilter({name: "Voted"});
+    const voteHistory = await votingRead.queryFilter({ name: "Voted" });
     console.log("History >>> ", voteHistory);
-    voteHistory.forEach( (data) =>  {
+    voteHistory.forEach((data) => {
       // Get the candidate and electionId
       const electionId = data.args[0];
       const candidateAddress = decrypt(data.args[1]);
-      
+
 
       if (electionId.eq(election[0])) {
         resultObj[candidateAddress] += 1;
@@ -56,8 +57,8 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
       return resultObj[candidate];
     });
     console.log(resultArr)
-    await tx(votingWrite.collateResult(election[0], candidates, resultArr));
-    alert("Result has been successfully compiled");
+    await tx(votingWrite.publishResult(election[0], candidates, resultArr));
+    alert("Result has been successfully Publish");
   };
 
 
@@ -159,9 +160,9 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
               End
             </Link>
             &nbsp;&nbsp;&nbsp;
-            <Link className="disable" onClick={async () => await compileResult(id)} to="#">
-              Compile Result
-            </Link>
+            { !isChairman() ? <Link className="disable" onClick={async () => await compileResult(id)} to="#">
+              Publish Result
+            </Link> : null}
             ' &nbsp;&nbsp;&nbsp;'
             <Link className="disable" to={`/viewElection/${id}`}>
               View
