@@ -1,15 +1,34 @@
 import React, { useState } from "react";
 import { utils } from "ethers";
 
-import { Table, Button, Row, Col, Card } from "antd";
+import { Table, Button, Row, Col, Card, Modal, Input, Form } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
 import { decrypt } from "../../encryption";
+import { decryptCandidateAddress } from "../../rsaEncryption";
 
 export default function AllElections({ votingRead, votingWrite, tx, schoolRead }) {
   const [elections, setElections] = useState([]);
+<<<<<<< HEAD
   const isChairman = async() => await schoolRead.checkRole("Chairman").wait();
   const isTeacher = () =>  schoolRead.checkRole("Teacher");
+=======
+  const [selectedElectionId, setSelectedElectionId] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [compilingResult, setCompilingResult] = useState(false);
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+>>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
 
   const startElection = async id => {
     alert("Starting Election");
@@ -21,14 +40,20 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
     await tx(votingWrite.stopElection(id));
   };
 
-  const compileResult = async id => {
+  const initResultCompilation = id => {
+    setSelectedElectionId(id);
+    showModal();
+  };
+
+  const compileResult = async values => {
+    setCompilingResult(true);
     // Fetch full details about the election.
-    const [startBlock, endBlock] = await votingRead.getBlockNumbers(id);
-    const election = await votingRead.getElection(id);
+    const [startBlock, endBlock] = await votingRead.getBlockNumbers(selectedElectionId);
+    const election = await votingRead.getElection(selectedElectionId);
 
     // Get the candidates into a mapping
     const candidates = election[1];
-    console.log(election)
+    console.log(election);
     let resultObj = {};
     console.log("election >>>>>>>> ", election);
     for (let i = 0; i < candidates.length; i++) {
@@ -37,30 +62,45 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
     // Go through all events since when the block was deployed until when it was stopped.
     const voteHistory = await votingRead.queryFilter({ name: "Voted" });
     console.log("History >>> ", voteHistory);
+<<<<<<< HEAD
     voteHistory.forEach((data) => {
       // Get the candidate and electionId
       const electionId = data.args[0];
       const candidateAddress = decrypt(data.args[1]);
 
+=======
+    voteHistory.forEach(data => {
+      // Get the candidate and electionId
+      const electionId = data.args[0];
+      const candidateAddress = decryptCandidateAddress(data.args[1], values.privateKey);
+>>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
 
       if (electionId.eq(election[0])) {
         resultObj[candidateAddress] += 1;
-        console.log(candidateAddress)
-
+        console.log(candidateAddress);
       }
     });
 
     // Call Smart contract to Publish election Results
     // Pass the array of Candidates and their results.
     const resultArr = candidates.map(candidate => {
-      console.log(resultObj)
+      console.log(resultObj);
       return resultObj[candidate];
     });
+<<<<<<< HEAD
     console.log(resultArr)
     await tx(votingWrite.publishResult(election[0], candidates, resultArr));
     alert("Result has been successfully Publish");
   };
+=======
+    console.log(resultArr);
+    await tx(votingWrite.collateResult(election[0], candidates, resultArr));
+    alert("Result has been successfully compiled");
+>>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
 
+    setCompilingResult(false);
+    setIsModalVisible(false);
+  };
 
   const loadElections = async () => {
     setElections(await votingWrite.getElections());
@@ -160,9 +200,15 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
               End
             </Link>
             &nbsp;&nbsp;&nbsp;
+<<<<<<< HEAD
             { !isChairman() ? <Link className="disable" onClick={async () => await compileResult(id)} to="#">
               Publish Result
             </Link> : null}
+=======
+            <Link className="disable" onClick={() => initResultCompilation(id)} to="#">
+              Compile Result
+            </Link>
+>>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
             ' &nbsp;&nbsp;&nbsp;'
             <Link className="disable" to={`/viewElection/${id}`}>
               View
@@ -216,14 +262,34 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
   ];
   return (
     // <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
-    <Card title="All Elections">
-      <div style={{ padding: 8 }}>
-        <Navigation buttons={additionalNav} />
-        <div>
-          <Table dataSource={dataSource} columns={columns} />;
+    <>
+      <Card title="All Elections">
+        <div style={{ padding: 8 }}>
+          <Navigation buttons={additionalNav} />
+          <div>
+            <Table dataSource={dataSource} columns={columns} />;
+          </div>
         </div>
-      </div>
-    </Card>
-    // </div>
+      </Card>
+      <Modal
+        title="Set Private Key to Compile Results"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Form name="compileResult" onFinish={compileResult}>
+          <Form.Item name="privateKey" rules={[{ required: true, message: "Missing private key" }]}>
+            <Input.TextArea placeholder="Paste Private Key here" />
+          </Form.Item>
+          <Form.Item>
+            <div style={{ paddingTop: 8 }}>
+              <Button loading={compilingResult} type="primary" htmlType="submit">
+                Compile Result
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }
