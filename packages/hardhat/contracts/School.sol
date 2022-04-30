@@ -21,8 +21,9 @@ contract School {
   mapping(uint => StakeHolder) private stakeholders;
   mapping(address => uint) private holderMap;
 
-  constructor(){
-    _roles[keccak256(abi.encodePacked("Admin"))].members[0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931] = true;
+  constructor(address admin){
+    // _roles[keccak256(abi.encodePacked("Admin"))].members[0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931] = true;
+    _roles[keccak256(abi.encodePacked("Admin"))].members[admin] = true;
   }
 
 // description of stakeholders
