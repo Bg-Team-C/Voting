@@ -1,6 +1,13 @@
 pragma solidity >=0.8.0 <0.9.0;
 //SPDX-License-Identifier: MIT
 
+///@author Team-C project Team
+///@title School Leadership Election.
+///@notice Only the chairman and teachers can setup and compile the result of the votes.
+///@notice Only the chairman can grant access for the vote to happen.
+///@dev Contract under development to enable each stakeholder vote.
+
+
 import  "./School.sol";
 import "hardhat/console.sol";
 
@@ -12,6 +19,9 @@ contract Voting {
     school = School(schoolAddr);
   }
 
+    ///@param Candidates Those who needs to be voted for.
+    ///@param CandidateVote The vote of each candidates address of the file shared
+    ///@param voters Those who vote during the election 
   struct Election {
     uint electionId;
     mapping(uint => address) candidates;
@@ -31,7 +41,7 @@ contract Voting {
 
   uint private electionCounter = 0;
 
-  //@notice Voting Process
+  ///@notice Voting Process
   function vote(string memory _candidateId, uint electionId) public
   electionIsActive(electionId)
   onlyStakeholders
@@ -40,16 +50,16 @@ contract Voting {
     // To check that voters haven't voted before
     require(!election.voters[msg.sender], "Have already voted");
 
-    // Record the vote
+    ///@notice Record the vote
     election.voters[msg.sender] = true;
 
-    //@notice Update candidate vote Count
+    ///@notice Update candidate vote Count
     // election.candidateVote[_candidateId] += 1;
     emit Voted(electionId, _candidateId);
     console.log(_candidateId);
   }
   
-  ///@notice  Function to  start  election
+  ///@notice Function to start election
 
   function startElection(uint electionId) public onlyChairman{
     Election storage election = elections[electionId];
@@ -88,7 +98,7 @@ contract Voting {
       election.candidates[i] = candidateList[i];
     }
 
-
+  ///@dev incrementing electionCounter to add to the vote of the candidate
     electionCounter++;
   }
 
@@ -237,10 +247,10 @@ contract Voting {
 
   //* EVENTS & ERRORS *
 
-  // event to emit when vote is carried out
+  ///@dev event to emit when vote is carried out
   event Voted(uint indexed electionId, address voter, address candidate);
 
-  ///event to emit when candidate has been created
+  ///@dev event to emit when candidate has been created
   event CandidateCreated(uint _candidateId, string _candidateName);
 
   /// event to emit when a candidate receives a vote

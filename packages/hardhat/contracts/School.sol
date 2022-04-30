@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+///@author Team-C project Team
+///@title School Leadership Election
+
 // school contract for stakeholders
 contract School {
     uint stakeholdersCount = 0;
@@ -9,6 +12,10 @@ contract School {
   struct Role {
     mapping(address => bool) members;
   }
+
+    ///@param Name The name of the stakeholder
+    ///@param role e.g chairman, teacher, etc.
+    ///@param id The address of user
 
   struct StakeHolder {
     string name;
@@ -95,6 +102,9 @@ contract School {
       function hasRole(string memory role, address user) public view returns(bool) {
     return _roles[keccak256(abi.encodePacked(role))].members[user];
       }
+
+
+// * M O D I F I E R S *
 
   modifier onlyAdmin {
     require(hasRole(string("Admin"), msg.sender), "You are not an Admin");
