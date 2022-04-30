@@ -5,6 +5,7 @@ import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
 import { encrypt } from "../../encryption";
+import { encryptCandidateAddress } from "../../rsaEncryption";
 
 export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, id }) {
   const { path } = useRouteMatch();
@@ -15,7 +16,7 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
 
   // Check if user has already voted in this election.
   const vote = async address => {
-    await tx(votingWrite.vote(encrypt(address), 0));
+    await tx(votingWrite.vote(encryptCandidateAddress(address), 0));
   };
 
   const loadElection = async () => {
