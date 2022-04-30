@@ -1,30 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { utils } from "ethers";
+import { utils, BigNumber } from "ethers";
 
 import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
+import { encrypt } from "../../encryption";
+import { encryptCandidateAddress } from "../../rsaEncryption";
 
-export default function ViewElection({ match, schoolRead, votingRead, votingWrite, tx }) {
+export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, id }) {
   const { path } = useRouteMatch();
 
   const [candidates, setCandidates] = useState([]);
   const [election, setElection] = useState(null);
-  // const  [electionId,  setElectionId] = useState(match.params.id);
+  const [electionId, setElectionId] = useState(id);
 
   // Check if user has already voted in this election.
-
   const vote = async address => {
-    await tx(votingWrite.vote(address, 0));
+    await tx(votingWrite.vote(encryptCandidateAddress(address), 0));
   };
 
   const loadElection = async () => {
-    setElection(await votingRead.getElection(0));
+    setElection(await votingRead.getElection(electionId));
   };
 
   const viewResults = async () => {
-    const results = await votingRead.viewResults(0);
-    alert(JSON.stringify(results));
+    const results = await votingRead.viewResults(electionId);
+
+    setCandidates(prev => prev.map(candidate => {
+        // Get index of candidate in result
+        const candidateIndex = results[0].findIndex((value, index) => {
+          return candidate[0] === value;
+        });
+        return [...candidate, BigNumber.from(results[1][candidateIndex]).toNumber()];
+      }),
+    );
   };
 
   useEffect(() => {

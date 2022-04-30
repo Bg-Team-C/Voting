@@ -253,7 +253,7 @@ function App(props) {
             schoolRead={readContracts.School}
           />
         </Route>
-        <Route path="/AddElection">
+        <Route path="/AddElection"> 
           <AddElection
             votingRead={readContracts.Voting}
             votingWrite={writeContracts.Voting}
@@ -261,14 +261,16 @@ function App(props) {
             schoolRead={readContracts.School}
           />
         </Route>
-        <Route path="/viewElection/:id">
+        <Route path="/viewElection/:id"
+          render={ ({match}) => 
           <ViewElection
             votingRead={readContracts.Voting}
             votingWrite={writeContracts.Voting}
             tx={tx}
             schoolRead={readContracts.School}
-          />
-        </Route>
+            id={match.params.id}
+          />}
+        />
         <Route path="/Stakeholders">
           <Stakeholders
             votingRead={readContracts.Voting}

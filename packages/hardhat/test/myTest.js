@@ -17,7 +17,7 @@ describe("Election", function () {
   describe("Voting", function () {
     it("Should deploy Voting", async function () {
       const School = await ethers.getContractFactory("School")
-      const school = await School.deploy("0xD0aAB48daF5A4851C2c71b05165CeD35CaA9197E");
+      const school = await School.deploy();
 
       const Voting = await ethers.getContractFactory("Voting");
       const voting = await Voting.deploy(school.address);
@@ -28,26 +28,25 @@ describe("Election", function () {
 
   describe("Vote for Candidates Election", function () {
     let deployer;
+    let chairman;
     let school;
     let voting;
     let stakeholders;
 
     before(async function() {
-      const [owner] = await ethers.getSigners()
+      const [owner, addr1] = await ethers.getSigners()
       deployer = owner
+      chairman = addr1
 
       const School = await ethers.getContractFactory("School")
-      school = await School.deploy(deployer.address);
+      school = await School.deploy();
 
       const Voting = await ethers.getContractFactory("Voting");
       voting = await Voting.deploy(school.address);
     })
 
     it("Should not be able to add stakeholders", async function() {
-      const School = await ethers.getContractFactory("School")
-      const schoolContract = await School.deploy("0xD0aAB48daF5A4851C2c71b05165CeD35CaA9197E");
-
-      await expect(schoolContract.addStakeholder("0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931", "Kingsley Holyhill", "Chairman")).to.be.revertedWith("You are not an Admin")
+      await expect(school.connect(chairman).addStakeholder("0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931", "Kingsley Holyhill", "Chairman")).to.be.revertedWith("You are not an Admin")
     })
 
     it("Should add stakeholder", async function() {
@@ -61,21 +60,18 @@ describe("Election", function () {
 
     it("Should add stakeholders", async function() {
       await school.addStakeholders(
-        ["0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931", "0x449266b65783538bc1A4fFC1C1583d1A0F92048e"], 
-        ["John Doe", "Doe John"], 
-        ["Teacher", "Student"])
+        [chairman.address, "0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931", "0x449266b65783538bc1A4fFC1C1583d1A0F92048e"], 
+        ["Chairman Doe", "John Doe", "Doe John"], 
+        ["Chairman", "Teacher", "Student"])
       stakeholders = await school.getStakeholders()
       expect(stakeholders.length).equal(3)
-      expect(stakeholders[0].length).equal(3)
-      expect(stakeholders[1].length).equal(3)
-      expect(stakeholders[2].length).equal(3)
+      expect(stakeholders[0].length).equal(4)
+      expect(stakeholders[1].length).equal(4)
+      expect(stakeholders[2].length).equal(4)
     })
 
     it("Should not be able to assign role to a stakeholder", async function() {
-      const School = await ethers.getContractFactory("School")
-      const schoolContract = await School.deploy("0xD0aAB48daF5A4851C2c71b05165CeD35CaA9197E");
-
-      await expect(schoolContract.assignRole("0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "Student")).to.be.revertedWith("You are not an Admin")
+      await expect(school.connect(chairman).assignRole("0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "Student")).to.be.revertedWith("You are not an Admin")
     })
 
     it("Should assign role to a stakeholder", async function() {
@@ -84,10 +80,7 @@ describe("Election", function () {
     })
 
     it("Should not be able to revoke role from a stakeholder", async function() {
-      const School = await ethers.getContractFactory("School")
-      const schoolContract = await School.deploy("0xD0aAB48daF5A4851C2c71b05165CeD35CaA9197E");
-
-      await expect(schoolContract.revokeRole("0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "Student")).to.be.revertedWith("You are not an Admin")
+      await expect(school.connect(chairman).revokeRole("0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "Student")).to.be.revertedWith("You are not an Admin")
     })
 
     it("Should revoke role of a stakeholder", async function() {
@@ -102,11 +95,11 @@ describe("Election", function () {
       ).to.be.revertedWith("You don't have the required privilege")
     })
 
-    // it("Should be able to create an election", async function() {
-    //   await voting.connect("0xD0aAB48daF5A4851C2c71b05165CeD35CaA9197E").addElection(
-    //     ["0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931"], 
-    //     "President")
-    // })
+    it("Should be able to create an election", async function() {
+      await voting.connect(chairman).addElection(
+        ["0x449266b65783538bc1A4fFC1C1583d1A0F92048e", "0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931"], 
+        "President")
+    })
 
     // it("Should not be able to vote because he has voted before", async function(){
     //   // await school.addStakeholder("0xc0D483A3e8B01776EB94f55EA15Ea7fF348B0931", "Kingsley Holyhill", "Chairman")
