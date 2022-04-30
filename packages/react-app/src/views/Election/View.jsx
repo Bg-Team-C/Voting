@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { utils } from "ethers";
+import { utils, BigNumber } from "ethers";
 
 import { Table, Button, Row, Col, Card } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
@@ -11,7 +11,7 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
 
   const [candidates, setCandidates] = useState([]);
   const [election, setElection] = useState(null);
-  const  [electionId,  setElectionId] = useState(id);
+  const [electionId, setElectionId] = useState(id);
 
   // Check if user has already voted in this election.
   const vote = async address => {
@@ -24,9 +24,15 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
 
   const viewResults = async () => {
     const results = await votingRead.viewResults(electionId);
-    console.log(results[0])
-    console.log(parseInt(results[1][1].toHexString()))
-    alert(JSON.stringify(results));
+
+    setCandidates(prev => prev.map(candidate => {
+        // Get index of candidate in result
+        const candidateIndex = results[0].findIndex((value, index) => {
+          return candidate[0] === value;
+        });
+        return [...candidate, BigNumber.from(results[1][candidateIndex]).toNumber()];
+      }),
+    );
   };
 
   useEffect(() => {
