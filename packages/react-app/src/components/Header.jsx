@@ -21,13 +21,6 @@ const Header = () => {
   const [shortenedAddress, setShortenedAddress] = useState("");
 
 
-  // useEffect(() => {
-  //   scrollHelper(window.pageYOffset);
-  //   window.addEventListener("scroll", (event) => {
-  //     scrollHelper(window.pageYOffset);
-  //   });
-  // }, [scrollHelper]);
-
   return (
     <header
       className={classNames(
