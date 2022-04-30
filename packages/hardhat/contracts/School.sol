@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import "hardhat/console.sol";
+
 // school contract for stakeholders
 contract School {
     uint stakeholdersCount = 0;
@@ -97,6 +99,7 @@ contract School {
       }
 
   function checkRole(string memory role) public view returns(bool) {
+    console.log(msg.sender);
     return _roles[keccak256(abi.encodePacked(role))].members[msg.sender];
       }
 

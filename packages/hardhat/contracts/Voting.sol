@@ -21,8 +21,10 @@ contract Voting {
     uint candidateCounter;
     bool isElectionActive;
     bool isElectionEnded;
+    bool isResultPublished;
     uint startBlock;
     uint endBlock;
+
   }
 
   mapping(address => bytes32) userRole;
@@ -83,6 +85,7 @@ contract Voting {
     election.position = position;
     election.isElectionActive = false;
     election.isElectionEnded = false;
+    election.isResultPublished = false;
 
     for (uint256 i = 0; i < candidateList.length; i++) {
       election.candidates[i] = candidateList[i];
@@ -94,7 +97,7 @@ contract Voting {
 
   ///@notice  Function to  collate  result
 
-  function collateResult(uint electionId, address[] calldata candidates, uint[] calldata count)
+  function publishResult(uint electionId, address[] calldata candidates, uint[] calldata count)
     public
     onlyChairmanOrTeacher
     electionEnded(electionId)
@@ -104,6 +107,7 @@ contract Voting {
       for (uint256 i = 0; i < candidates.length; i++) {
         election.candidateVote[candidates[i]] = count[i];
       }
+    election.isResultPublished = true;  
   }
 
   ///@notice  Function to  view result of   election
@@ -127,6 +131,30 @@ contract Voting {
       }
 
       return(candidateList, votes, election.position);
+  }
+
+  function electionStatus(uint electionId)
+    public
+    view
+    returns(
+      bool
+    )
+    {
+      Election storage election = elections[electionId];
+
+      return(election.isElectionActive);
+  }
+
+  function resultStatus(uint electionId)
+    public
+    view
+    returns(
+      bool
+    )
+    {
+      Election storage election = elections[electionId];
+
+      return(election.isResultPublished);
   }
 
 

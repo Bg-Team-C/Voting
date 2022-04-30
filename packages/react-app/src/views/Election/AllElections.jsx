@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { utils } from "ethers";
 
 import { Table, Button, Row, Col, Card, Modal, Input, Form } from "antd";
@@ -7,15 +7,27 @@ import { Navigation } from "./navigation";
 import { decrypt } from "../../encryption";
 import { decryptCandidateAddress } from "../../rsaEncryption";
 
-export default function AllElections({ votingRead, votingWrite, tx, schoolRead }) {
+export default function AllElections({ votingRead, votingWrite, tx, schoolWrite }) {
   const [elections, setElections] = useState([]);
-<<<<<<< HEAD
-  const isChairman = async() => await schoolRead.checkRole("Chairman").wait();
-  const isTeacher = () =>  schoolRead.checkRole("Teacher");
-=======
   const [selectedElectionId, setSelectedElectionId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [compilingResult, setCompilingResult] = useState(false);
+  const [isTeacher, setTeacher] = useState(false);
+  const [isChairman, setChairman] = useState(false)
+
+  const getTeacher = useCallback(async () => {
+    setTeacher(await schoolWrite.checkRole("Teacher"));
+  });
+
+  const getChairman = useCallback(async () => {
+    setChairman(await schoolWrite.checkRole("Chairman"));
+  });
+
+  useEffect(() => {
+    getTeacher();
+    getChairman();
+    console.log(isChairman)
+  }, false)
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -28,7 +40,6 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
   const handleCancel = () => {
     setIsModalVisible(false);
   };
->>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
 
   const startElection = async id => {
     alert("Starting Election");
@@ -62,18 +73,10 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
     // Go through all events since when the block was deployed until when it was stopped.
     const voteHistory = await votingRead.queryFilter({ name: "Voted" });
     console.log("History >>> ", voteHistory);
-<<<<<<< HEAD
-    voteHistory.forEach((data) => {
-      // Get the candidate and electionId
-      const electionId = data.args[0];
-      const candidateAddress = decrypt(data.args[1]);
-
-=======
     voteHistory.forEach(data => {
       // Get the candidate and electionId
       const electionId = data.args[0];
       const candidateAddress = decryptCandidateAddress(data.args[1], values.privateKey);
->>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
 
       if (electionId.eq(election[0])) {
         resultObj[candidateAddress] += 1;
@@ -87,24 +90,22 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
       console.log(resultObj);
       return resultObj[candidate];
     });
-<<<<<<< HEAD
     console.log(resultArr)
     await tx(votingWrite.publishResult(election[0], candidates, resultArr));
     alert("Result has been successfully Publish");
-  };
-=======
-    console.log(resultArr);
-    await tx(votingWrite.collateResult(election[0], candidates, resultArr));
-    alert("Result has been successfully compiled");
->>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
+  
 
     setCompilingResult(false);
     setIsModalVisible(false);
   };
 
-  const loadElections = async () => {
+  const loadElections = useCallback( async () => {
     setElections(await votingWrite.getElections());
-  };
+  });
+
+  useEffect(() => {
+    loadElections();
+  })
 
   // Get My Role
 
@@ -192,24 +193,18 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
         electionStatus: <div>{!isActive && isEnded ? "Ended" : isActive ? "Started" : "Not Started"}</div>,
         action: (
           <div className="table-actions">
-            <Link className="view" onClick={async () => await startElection(id)} to="#">
+            {isChairman ? <Link className="view" onClick={async () => await startElection(id)} to="#">
               Start
-            </Link>
+            </Link>: null}
             &nbsp;&nbsp;&nbsp;
-            <Link className="edit" onClick={async () => await endElection(id)} to="#">
+            {isChairman ? <Link className="edit" onClick={async () => await endElection(id)} to="#">
               End
-            </Link>
-            &nbsp;&nbsp;&nbsp;
-<<<<<<< HEAD
-            { !isChairman() ? <Link className="disable" onClick={async () => await compileResult(id)} to="#">
-              Publish Result
             </Link> : null}
-=======
-            <Link className="disable" onClick={() => initResultCompilation(id)} to="#">
+            &nbsp;&nbsp;&nbsp;
+            {isChairman || isTeacher ? <Link className="disable" onClick={ () => initResultCompilation(id)} to="#">
               Compile Result
-            </Link>
->>>>>>> 4b8ed3f51d968780fe01e73d098312bed1d16488
-            ' &nbsp;&nbsp;&nbsp;'
+            </Link> : null}
+            &nbsp;&nbsp;&nbsp;
             <Link className="disable" to={`/viewElection/${id}`}>
               View
             </Link>
@@ -255,9 +250,9 @@ export default function AllElections({ votingRead, votingWrite, tx, schoolRead }
 
   const additionalNav = [
     <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
-      <Link className="add" onClick={loadElections} to="#">
+      {/* <Link className="add" onClick={loadElections} to="#">
         Load Elections
-      </Link>
+      </Link> */}
     </Button>,
   ];
   return (

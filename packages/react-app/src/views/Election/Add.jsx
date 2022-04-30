@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { utils } from "ethers";
 
 import { CandidateField } from "../../components";
@@ -30,11 +30,13 @@ export default function AddElection({ role, schoolRead, votingRead, votingWrite,
   //   setCurrentPage(prev => prev + 1);
   // };
 
-  const loadStakeholders = async () => {
-    alert("Loading Stake holders");
-    
+  const loadStakeholders = useCallback( async () => {
     setStakeHolders(await schoolRead.getStakeholders());
-  };
+  });
+
+  useEffect(() => {
+    loadStakeholders();
+  })
 
   const rowSelection = {
     onChange: (selectedRowKeys, selectedRows) => {
@@ -106,9 +108,9 @@ export default function AddElection({ role, schoolRead, votingRead, votingWrite,
 
   const additionalNav = [
     <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
-      <Link className="add" onClick={loadStakeholders} to="#">
+      {/* <Link className="add" onClick={loadStakeholders} to="#">
         Load Stakeholders
-      </Link>
+      </Link> */}
     </Button>,
   ];
   return (

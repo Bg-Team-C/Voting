@@ -222,6 +222,39 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
+  //addd
+
+  const [isTeacher, setTeacher] = useState(false);
+  const [isChairman, setChairman] = useState(false)
+  const [isStudent, setStudent] = useState(false)
+  const [isBoardMember, setBoardMember] = useState(false)
+  const [isAdmin, setAdmin] = useState(false)
+
+  const getTeacher = useCallback(async () => {
+    setTeacher(await writeContracts.School.checkRole("Teacher"));
+  });
+
+  const getChairman = useCallback(async () => {
+    setChairman(await writeContracts.School.checkRole("Chairman"));
+  });
+  const getStudent = useCallback(async () => {
+    setStudent(await writeContracts.School.checkRole("Student"));
+  });
+  const getBoardMember = useCallback(async () => {
+    setChairman(await writeContracts.School.checkRole("Board_member"));
+  });
+  const getAdmin = useCallback(async () => {
+    setChairman(await writeContracts.School.checkRole(""));
+  });
+
+  useEffect(() => {
+    getTeacher();
+    getChairman();
+    getBoardMember();
+    getStudent();
+    console.log(isChairman)
+  }, false)
+
   return (
     <div className="App">
       {/* ✏️ Edit the header and change the title to your project name */}
@@ -251,6 +284,7 @@ function App(props) {
             votingWrite={writeContracts.Voting}
             tx={tx}
             schoolRead={readContracts.School}
+            schoolWrite={writeContracts.School}
           />
         </Route>
         <Route path="/AddElection"> 
