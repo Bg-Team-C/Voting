@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { utils } from "ethers";
 
-import { Table, Button, Row, Col, Card, Upload, message } from "antd";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Button, Card, Upload, message, Modal, Row, Col, Form, Input, Space, Select } from "antd";
+import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+
 import * as XLSX from "xlsx";
 
 export default function Stakeholders({ schoolWrite, votingRead, votingWrite, tx }) {
@@ -84,42 +84,167 @@ export default function Stakeholders({ schoolWrite, votingRead, votingWrite, tx 
     reader.readAsBinaryString(file);
   };
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [uploadMethod, setUploadMethod] = useState("");
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const onSubmitStakeHolders = async ({ stakeHolders }) => {
+    const addresses = [];
+    const names = [];
+    const roles = [];
+
+    for (const index in stakeHolders) {
+      addresses.push(stakeHolders[index].address);
+      names.push(stakeHolders[index].name);
+      roles.push(stakeHolders[index].role);
+    }
+
+    setUploading(true);
+    await tx(schoolWrite.addStakeholders(addresses, names, roles));
+    setUploading(false);
+    setIsModalVisible(false);
+  };
+
+  const UPLOAD_METHOD = { CSV: "CSV", MANUAL: "MANUAL" };
+  const ROLES = {
+    CHAIRMAN: "Chairman",
+    STUDENT: "Student",
+    TEACHER: "Teacher",
+    BOARD_MEMBER: "Board_member",
+  };
+
+  const chooseUploadMethod = method => {
+    setUploadMethod(method);
+    showModal(true);
+  };
+
   return (
-    <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
-      <Card title="Upload Stakeholders">
-        <div style={{ padding: 8 }}>
-          <Upload
-            accept=".csv,.xlsx,.xls"
-            action="#"
-            listType="picture-card"
-            fileList={stakeholdersCSV}
-            onChange={handleChange}
-            beforeUpload={() => false}
-            maxCount={1}
-          >
-            {stakeholdersCSV.length === 0 && (
-              <div>
-                <div style={{ marginTop: 8 }}>Upload csv</div>
+    <>
+      <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
+        <Card title="Upload Stakeholders">
+          <Row gutter={15}>
+            <Col xs={12}>
+              <Button type={"primary"} onClick={() => chooseUploadMethod(UPLOAD_METHOD.CSV)} disabled={uploading}>
+                use CSV
+              </Button>
+            </Col>
+            <Col xs={12}>
+              <Button type={"primary"} onClick={() => chooseUploadMethod(UPLOAD_METHOD.MANUAL)} disabled={uploading}>
+                Enter now
+              </Button>
+            </Col>
+          </Row>
+        </Card>
+      </div>
+      <Modal title="Set up Addresses" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+        <div>
+          {uploadMethod === UPLOAD_METHOD.CSV ? (
+            <div style={{ padding: 8 }}>
+              <Upload
+                accept=".csv,.xlsx,.xls"
+                action="#"
+                listType="picture-card"
+                fileList={stakeholdersCSV}
+                onChange={handleChange}
+                beforeUpload={() => false}
+                maxCount={1}
+              >
+                {stakeholdersCSV.length === 0 && (
+                  <div>
+                    <div style={{ marginTop: 8 }}>Upload csv</div>
+                  </div>
+                )}
+              </Upload>
+              <div style={{ padding: 8 }}>
+                <Button
+                  type={"primary"}
+                  loading={uploading}
+                  onClick={async () => {
+                    setUploading(true);
+                    await tx(schoolWrite.addStakeholders(addresses, names, roles));
+                    setUploading(false);
+                    setCustomersCsvFile([]);
+                    setAddresses([]);
+                    setNames([]);
+                    setRoles([]);
+                  }}
+                  disabled={stakeholdersCSV.length === 0}
+                >
+                  Upload
+                </Button>
               </div>
-            )}
-          </Upload>
-          <div style={{ padding: 8 }}>
-            <Button
-              type={"primary"}
-              loading={uploading}
-              onClick={async () => {
-                setUploading(true);
-                await tx(schoolWrite.addStakeholders(addresses, names, roles));
-                setUploading(false);
-                setCustomersCsvFile([]);
-              }}
-              disabled={stakeholdersCSV.length === 0}
-            >
-              Upload
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <Form name="stakeHolders" onFinish={onSubmitStakeHolders} autoComplete="off">
+              <Form.List name="stakeHolders">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "address"]}
+                          rules={[{ required: true, message: "Missing address" }]}
+                        >
+                          <Input placeholder="Address" />
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "name"]}
+                          rules={[{ required: true, message: "Missing name" }]}
+                        >
+                          <Input placeholder="Name" />
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "role"]}
+                          rules={[{ required: true, message: "Missing role" }]}
+                        >
+                          <Select
+                            size="large"
+                            mode="single"
+                            className="sDash_fullwidth-select"
+                            placeholder="Select a role"
+                          >
+                            {Object.values(ROLES).map(role => {
+                              return (
+                                <Select.Option key={role} value={role}>
+                                  {role}
+                                </Select.Option>
+                              );
+                            })}
+                          </Select>
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                        Add field
+                      </Button>
+                    </Form.Item>
+                  </>
+                )}
+              </Form.List>
+              <Form.Item>
+                <Button loading={uploading} type="primary" htmlType="submit">
+                  Submit
+                </Button>
+              </Form.Item>
+            </Form>
+          )}
         </div>
-      </Card>
-    </div>
+      </Modal>
+    </>
   );
 }
