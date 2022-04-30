@@ -18,7 +18,7 @@ export function Navigation({ buttons }) {
           {" "}
           <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
             <Link className="add" to="/Election">
-              View all
+              View all Election
             </Link>
           </Button>
         </Col>

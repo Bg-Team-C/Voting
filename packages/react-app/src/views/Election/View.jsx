@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { utils, BigNumber } from "ethers";
 
 import { Table, Button, Row, Col, Card } from "antd";
@@ -13,15 +13,41 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
   const [candidates, setCandidates] = useState([]);
   const [election, setElection] = useState(null);
   const [electionId, setElectionId] = useState(id);
+  const [isElectionStatus, setElectionStatus] = useState(false);
+  const [isResultStatus, setResultStatus] = useState(false)
+  const [position, setPosition] = useState('')
+
+  const getElectionStatus = useCallback(async () => {
+    setElectionStatus(await votingWrite.electionStatus(electionId));
+  });
+
+  const getResultStatus = useCallback(async () => {
+    setResultStatus(await votingRead.resultStatus(electionId));
+  });
+
+  useEffect(() => {
+    getResultStatus();
+    getElectionStatus();
+  }, false)
 
   // Check if user has already voted in this election.
   const vote = async address => {
-    await tx(votingWrite.vote(encryptCandidateAddress(address), 0));
+    await tx(votingWrite.vote(encryptCandidateAddress(address), electionId));
   };
 
-  const loadElection = async () => {
-    setElection(await votingRead.getElection(electionId));
-  };
+  const loadElection = useCallback(async () => {
+    await votingRead.getElection(electionId).then(async (election) => {
+      const candidatesInfo = await Promise.all(
+          election[1].map(async candidateAddr => {
+            return await schoolRead.getStakeholder(candidateAddr);
+          }),
+        );
+        console.log("candidates >>> ", candidatesInfo);
+        console.log("position >>", election[1])
+        setPosition(election[2])
+        setCandidates(candidatesInfo);
+    });
+  });
 
   const viewResults = async () => {
     const results = await votingRead.viewResults(electionId);
@@ -36,21 +62,10 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
     );
   };
 
+  
   useEffect(() => {
-    if (election) {
-      console.log("Election >>> ", election);
-      const loadCandidates = async () => {
-        const candidatesInfo = await Promise.all(
-          election[1].map(async candidateAddr => {
-            return await schoolRead.getStakeholder(candidateAddr);
-          }),
-        );
-        console.log("candidates >>> ", candidatesInfo);
-        setCandidates(candidatesInfo);
-      };
-      loadCandidates();
-    }
-  }, [election]);
+    loadElection()
+  }, []);
 
   const dataSource = [];
   // const dataSource = [
@@ -93,9 +108,9 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
         votes: <div>{votes}</div>,
         action: (
           <div className="table-actions">
-            <Link className="view" onClick={async () => await vote(address)} to="#">
+            {isElectionStatus ? <Link className="view" onClick={async () => await vote(address)} to="#">
               Vote
-            </Link>
+            </Link> : null }
             &nbsp;&nbsp;&nbsp;
           </div>
         ),
@@ -129,19 +144,19 @@ export default function ViewElection({ schoolRead, votingRead, votingWrite, tx, 
   ];
 
   const additionalNav = [
+    // <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
+    //   <Link className="add" onClick={async () => await loadElection()} to="#">
+    //     Load Election
+    //   </Link>
+    // </Button>,
     <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
-      <Link className="add" onClick={async () => await loadElection()} to="#">
-        Load Election
-      </Link>
-    </Button>,
-    <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
-      <Link className="add" onClick={async () => await viewResults()} to="#">
+      {isResultStatus ? <Link className="add" onClick={async () => await viewResults()} to="#">
         View Results
-      </Link>
+      </Link> : null}
     </Button>,
   ];
   return (
-    <Card title={`Viewing an Election for`}>
+    <Card title={`Viewing an Election for ${position}`}>
       <div style={{ padding: 8 }}>
         <Navigation buttons={additionalNav} />
         <div>

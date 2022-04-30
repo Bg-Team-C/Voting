@@ -1,18 +1,33 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { utils } from "ethers";
 
 import { Table, Button, Row, Col, Card, Modal, Input, Form } from "antd";
 import { Link, useRouteMatch } from "react-router-dom";
 import { Navigation } from "./navigation";
-import { useEventListener } from "eth-hooks/events/useEventListener";
 import { decrypt } from "../../encryption";
 import { decryptCandidateAddress } from "../../rsaEncryption";
 
-export default function AllElections({ votingRead, votingWrite, tx }) {
+export default function AllElections({ votingRead, votingWrite, tx, schoolWrite }) {
   const [elections, setElections] = useState([]);
   const [selectedElectionId, setSelectedElectionId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [compilingResult, setCompilingResult] = useState(false);
+  const [isTeacher, setTeacher] = useState(false);
+  const [isChairman, setChairman] = useState(false)
+
+  const getTeacher = useCallback(async () => {
+    setTeacher(await schoolWrite.checkRole("Teacher"));
+  });
+
+  const getChairman = useCallback(async () => {
+    setChairman(await schoolWrite.checkRole("Chairman"));
+  });
+
+  useEffect(() => {
+    getTeacher();
+    getChairman();
+    console.log(isChairman)
+  }, false)
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -75,17 +90,22 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
       console.log(resultObj);
       return resultObj[candidate];
     });
-    console.log(resultArr);
-    await tx(votingWrite.collateResult(election[0], candidates, resultArr));
-    alert("Result has been successfully compiled");
+    console.log(resultArr)
+    await tx(votingWrite.publishResult(election[0], candidates, resultArr));
+    alert("Result has been successfully Publish");
+  
 
     setCompilingResult(false);
     setIsModalVisible(false);
   };
 
-  const loadElections = async () => {
+  const loadElections = useCallback( async () => {
     setElections(await votingWrite.getElections());
-  };
+  });
+
+  useEffect(() => {
+    loadElections();
+  })
 
   // Get My Role
 
@@ -173,18 +193,18 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
         electionStatus: <div>{!isActive && isEnded ? "Ended" : isActive ? "Started" : "Not Started"}</div>,
         action: (
           <div className="table-actions">
-            <Link className="view" onClick={async () => await startElection(id)} to="#">
+            {isChairman ? <Link className="view" onClick={async () => await startElection(id)} to="#">
               Start
-            </Link>
+            </Link>: null}
             &nbsp;&nbsp;&nbsp;
-            <Link className="edit" onClick={async () => await endElection(id)} to="#">
+            {isChairman ? <Link className="edit" onClick={async () => await endElection(id)} to="#">
               End
-            </Link>
+            </Link> : null}
             &nbsp;&nbsp;&nbsp;
-            <Link className="disable" onClick={() => initResultCompilation(id)} to="#">
+            {isChairman || isTeacher ? <Link className="disable" onClick={ () => initResultCompilation(id)} to="#">
               Compile Result
-            </Link>
-            ' &nbsp;&nbsp;&nbsp;'
+            </Link> : null}
+            &nbsp;&nbsp;&nbsp;
             <Link className="disable" to={`/viewElection/${id}`}>
               View
             </Link>
@@ -230,9 +250,9 @@ export default function AllElections({ votingRead, votingWrite, tx }) {
 
   const additionalNav = [
     <Button type={"primary"} style={{ marginTop: 10, marginBottom: 10 }}>
-      <Link className="add" onClick={loadElections} to="#">
+      {/* <Link className="add" onClick={loadElections} to="#">
         Load Elections
-      </Link>
+      </Link> */}
     </Button>,
   ];
   return (
