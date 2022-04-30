@@ -5,7 +5,7 @@
 > Leadership Election! 🚀
 
 Live Demo
-Check out the live demo here: http://v.surge.sh/
+Check out the live demo here: http://.surge.sh/
 ![Voting Demo Image](Voting Demo.png)
 
 # 🏄‍♂️ Quick Start
